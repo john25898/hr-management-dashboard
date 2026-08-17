@@ -415,7 +415,7 @@
       "isDeparted": false
     },
     {
-      "name": "Irene arimi Njeru",
+      "name": "Irene Karimi Njeru",
       "gender": "F",
       "phone": "0715438496",
       "idNo": "22077169",
@@ -622,7 +622,7 @@
       "isDeparted": false
     },
     {
-      "name": "Morris Mutuma Kirunja",
+      "name": "Morris Mutuma",
       "gender": "M",
       "phone": "0708454877",
       "idNo": "32369317",
@@ -3750,7 +3750,7 @@
       "isDeparted": false
     },
     {
-      "name": "Samuel Nderitu Wagathima",
+      "name": "Samuel Ndiritu Wagathima",
       "gender": "M",
       "phone": "0715794492",
       "idNo": "32864465",
@@ -4301,29 +4301,6 @@
       "practiseeLicence": null,
       "validUntil": null,
       "age": 51,
-      "isDeparted": true
-    },
-    {
-      "name": "Millicent Marigu Mwangi",
-      "gender": "F",
-      "phone": "0702969933",
-      "idNo": "37079350",
-      "designation": "HRIO",
-      "designationGroup": "HRIO",
-      "designationOriginal": "Health Records Information Officer",
-      "county": "Embu",
-      "subCounty": "Manyatta",
-      "station": "Nembure Health Center",
-      "dateEmployed": "2023-06-02",
-      "contractEnd": "2024-09-30",
-      "dob": "1999-12-15",
-      "educationLevel": "Degree",
-      "qualification": "BSC in Health Records & Information Sciences",
-      "othersCert": null,
-      "regulatoryBody": null,
-      "practiseeLicence": null,
-      "validUntil": null,
-      "age": 26,
       "isDeparted": true
     },
     {
@@ -8164,7 +8141,7 @@
   ],
   "summary": {
     "totalEmployees": 181,
-    "totalDeparted": 100,
+    "totalDeparted": 99,
     "totalLayworkers": 154,
     "totalPersonnel": 335,
     "designationGroups": [

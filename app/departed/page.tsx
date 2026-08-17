@@ -182,16 +182,21 @@ export default function DepartedPage() {
         // Skip if this employee was exited via modal (already in exitedEmployees)
         if (storeMods?.employeeEdits?.[emp.name]?.isDeparted) return false;
 
-        // Check if endOfContract was set and is in the past
+        // Check if endOfContract was set and is in the past. Contract end
+        // (employment) is the source of truth for departure — not the
+        // practising-licence expiry, which can pass while the person is
+        // still employed.
         const storedEdit = storeMods?.employeeEdits?.[emp.name];
-        const contractDate = storedEdit?.endOfContract || emp.validUntil;
+        const contractDate =
+          storedEdit?.endOfContract || emp.contractEnd || emp.validUntil;
         if (!contractDate) return false;
         const d = new Date(contractDate);
         return d < now;
       })
       .map((emp: any) => {
         const storedEdit = storeMods?.employeeEdits?.[emp.name];
-        const contractDate = storedEdit?.endOfContract || emp.validUntil;
+        const contractDate =
+          storedEdit?.endOfContract || emp.contractEnd || emp.validUntil;
         return {
           ...emp,
           endOfContractDate: contractDate,

@@ -86,10 +86,10 @@ export default function LeavePage() {
   const syncedStaff: any[] = syncData?.staff || [];
 
   // Full staff list for filters / Gantt / balances / availability:
-  // the 187 HRH staff from the tracker workbook are the system of record.
-  // The central roster (181) and CMaT-mirrored staff only appear as a
-  // fallback if the tracker data is ever unavailable. This guarantees every
-  // part of the leave tab uses the same 187 (HRH only, no logistics).
+  // the central HR roster (181) from employees-enriched.json is the single
+  // system of record — the same list the Dashboard and Employees tabs use.
+  // The tracker workbook staff list only appears as a fallback if the roster
+  // API is ever unavailable, keeping every tab harmonized at 181.
   const employees = React.useMemo(() => {
     const seen = new Map<string, any>();
     const add = (name: string, extra: any = {}) => {
@@ -100,7 +100,20 @@ export default function LeavePage() {
       }
     };
     const trackerStaff: any[] = (trackerData as any).staff || [];
-    if (trackerStaff.length > 0) {
+    if (rosterEmployees.length > 0) {
+      rosterEmployees.forEach((e: any) =>
+        add(e.name, {
+          facility: e.station || e.facility || "",
+          county: (e.county || "").replace(/\s*County$/i, ""),
+          cadre: e.designation || e.designationOriginal || "",
+          designation: e.designation || "",
+          email: e.email || "",
+          phone: e.phone || "",
+          idNo: e.idNo || "",
+          sex: e.gender || "",
+        }),
+      );
+    } else if (trackerStaff.length > 0) {
       trackerStaff.forEach((s: any) =>
         add(s.name, {
           county: (s.county || "").replace(/\s*County$/i, ""),
@@ -111,25 +124,16 @@ export default function LeavePage() {
           sex: s.sex || "",
         }),
       );
-    } else {
-      rosterEmployees.forEach((e: any) =>
-        add(e.name, {
-          facility: e.station || e.facility || "",
-          county: e.county || "",
-          email: e.email || "",
-          designation: e.designation || "",
-        }),
-      );
-      syncedStaff.forEach((s: any) =>
-        add(s.name || s.staffName || s.email, {
-          facility: s.facility || "",
-          county: s.county || "",
-          email: s.email || s.staffEmail || "",
-          designation: s.jobTitle || "",
-          isSynced: true,
-        }),
-      );
     }
+    syncedStaff.forEach((s: any) =>
+      add(s.name || s.staffName || s.email, {
+        facility: s.facility || "",
+        county: s.county || "",
+        email: s.email || s.staffEmail || "",
+        designation: s.jobTitle || "",
+        isSynced: true,
+      }),
+    );
     return Array.from(seen.values()).sort((a, b) =>
       a.name.localeCompare(b.name),
     );
@@ -483,21 +487,52 @@ export default function LeavePage() {
     XLSX.writeFile(wb, "ujtp-master-db.xlsx");
   };
 
-  // Client-side balances: real HRH tracker entitlements — 187 staff with
-  // annual / sick / maternity buckets straight from the tracker workbook
-  // (hrh-leave-tracker-data.json). Leave types the tracker doesn't track
-  // (adoption, study, etc.) show "—" instead of a fabricated entitlement.
+  // Client-side balances: harmonized over the 181 active roster — the same
+  // list as the Dashboard/Employees tabs. Each staff member gets entitlements
+  // from the HRH tracker workbook (annual / sick / maternity); the 3 roster
+  // staff hired in 2026 (Millicent, Erica, Hosea) default to the standard
+  // buckets. Departed staff are no longer part of the leave roster (they live
+  // in the Departed tab), so they drop out of the balances table.
   const computedBalances = React.useMemo(() => {
-    return trackerUtil.map((u: any) => {
+    const utilByName = new Map<string, any>();
+    (trackerUtil as any[]).forEach((u: any) =>
+      utilByName.set(
+        String(u.name || "")
+          .trim()
+          .toLowerCase(),
+        u,
+      ),
+    );
+    return employees.map((e: any) => {
+      const u = utilByName.get(
+        String(e.name || "")
+          .trim()
+          .toLowerCase(),
+      );
+      const buckets = {
+        annual: u?.annual || {
+          entitlement: 30,
+          used: 0,
+          remaining: 30,
+          pct: 0,
+        },
+        sick: u?.sick || { entitlement: 14, used: 0, remaining: 14, pct: 0 },
+        maternity: u?.maternity || {
+          entitlement: 90,
+          used: 0,
+          remaining: 90,
+          pct: 0,
+        },
+      };
       const breakdown = leaveTypes.map((t: any) => {
         // Map the tracker's entitlement buckets to the matching columns.
         const src =
           t.name === "Annual Leave"
-            ? u.annual
+            ? buckets.annual
             : t.name === "Sick Leave"
-              ? u.sick
+              ? buckets.sick
               : t.name === "Maternity Leave"
-                ? u.maternity
+                ? buckets.maternity
                 : null;
         const ent = src?.entitlement;
         const hasEntitlement = ent !== undefined && ent !== null;
@@ -509,9 +544,14 @@ export default function LeavePage() {
           hasEntitlement,
         };
       });
-      return { employee: u.name, cadre: u.cadre, county: u.county, breakdown };
+      return {
+        employee: e.name,
+        cadre: e.cadre || "",
+        county: e.county || "",
+        breakdown,
+      };
     });
-  }, [trackerUtil, leaveTypes]);
+  }, [employees, trackerUtil, leaveTypes]);
 
   const getTypeColor = (name: string) =>
     leaveTypes.find((t) => t.name === name)?.color || "#64748b";

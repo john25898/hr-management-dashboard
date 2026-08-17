@@ -130,7 +130,7 @@ function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
     totalAllocated > 0 ? Math.round((totalTaken / totalAllocated) * 100) : 0;
 
   // Staff headcount by county / cadre — the Leave by County and Leave by
-  // Department cards count STAFF (from the 187 master list), not leave days.
+  // Department cards count STAFF (from the 181 master list), not leave days.
   const countyStaffData = React.useMemo(() => {
     const map = new Map<string, number>();
     staffMaster.forEach((s: any) => {
@@ -212,7 +212,7 @@ function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
               <MapPin className="h-4 w-4 text-teal-600" /> Leave by County
             </CardTitle>
             <CardDescription>
-              Staff headcount per county (from the 187 HRH master list)
+              Staff headcount per county (from the 181 HRH master list)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -239,7 +239,7 @@ function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
                               className="h-full rounded-full bg-teal-500"
                               style={{
                                 width: `${Math.round(
-                                  (c.staff / (summary?.totalStaff || 187)) *
+                                  (c.staff / (summary?.totalStaff || 181)) *
                                     100,
                                 )}%`,
                               }}
@@ -247,7 +247,7 @@ function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
                           </div>
                           <span className="text-xs font-medium">
                             {Math.round(
-                              (c.staff / (summary?.totalStaff || 187)) * 100,
+                              (c.staff / (summary?.totalStaff || 181)) * 100,
                             )}
                             %
                           </span>
@@ -319,7 +319,7 @@ function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
                               className="h-full rounded-full bg-violet-500"
                               style={{
                                 width: `${Math.round(
-                                  (c.staff / (summary?.totalStaff || 187)) *
+                                  (c.staff / (summary?.totalStaff || 181)) *
                                     100,
                                 )}%`,
                               }}
@@ -327,7 +327,7 @@ function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
                           </div>
                           <span className="text-xs">
                             {Math.round(
-                              (c.staff / (summary?.totalStaff || 187)) * 100,
+                              (c.staff / (summary?.totalStaff || 181)) * 100,
                             )}
                             %
                           </span>
@@ -339,7 +339,7 @@ function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
               </Table>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {summary?.totalStaff ?? 187} staff across {cadreStaffData.length}{" "}
+              {summary?.totalStaff ?? 181} staff across {cadreStaffData.length}{" "}
               cadres
             </p>
           </CardContent>

@@ -7,7 +7,7 @@
   },
   "summary": {
     "title": "HRH Staff Leave Tracker - 2025",
-    "totalStaff": 187,
+    "totalStaff": 181,
     "totalAnnualLeaveDaysTaken": 2501,
     "averageLeavePerStaff": 13.37,
     "leaveByCounty": [
@@ -130,7 +130,7 @@
         "totalLeaveDays": 30,
         "taken": 0,
         "pending": 30,
-        "pct": 0.0
+        "pct": 0
       },
       {
         "cadre": "Pharmacy Technologist - Supply Chain",
@@ -559,18 +559,6 @@
     },
     {
       "county": "Meru County",
-      "name": "Agnes Gakii Mutuma",
-      "cadre": "Social Worker",
-      "sex": "F",
-      "idNo": "29196917",
-      "phone": "0707351761",
-      "email": "aggiga954@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 90
-    },
-    {
-      "county": "Meru County",
       "name": "Alex Kaibiria Kanake",
       "cadre": "Clinical Officer",
       "sex": "M",
@@ -736,18 +724,6 @@
       "annualEntitlement": 30,
       "sickEntitlement": 14,
       "maternityEntitlement": 14
-    },
-    {
-      "county": "Meru County",
-      "name": "Dorcas Amatine Oranga",
-      "cadre": "Social Worker",
-      "sex": "F",
-      "idNo": "28112556",
-      "phone": "0716402418",
-      "email": "orangadorcas@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 90
     },
     {
       "county": "Meru County",
@@ -1051,36 +1027,12 @@
     },
     {
       "county": "Meru County",
-      "name": "Joy Makena Mwiti",
-      "cadre": "Social Worker",
-      "sex": "F",
-      "idNo": "27289539",
-      "phone": "0724036289",
-      "email": "joymake44@yahoo.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 90
-    },
-    {
-      "county": "Meru County",
       "name": "Juster Kendi",
       "cadre": "Social Worker",
       "sex": "F",
       "idNo": "31778517",
       "phone": "0713282819",
       "email": "kendijuster13@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 90
-    },
-    {
-      "county": "Meru County",
-      "name": "Kelvin Mwenda Gitari",
-      "cadre": "Social Worker",
-      "sex": "F",
-      "idNo": "32852183",
-      "phone": "0705160913",
-      "email": "kelvinmwe2015@gmail.com",
       "annualEntitlement": 30,
       "sickEntitlement": 14,
       "maternityEntitlement": 90
@@ -1180,42 +1132,6 @@
       "annualEntitlement": 30,
       "sickEntitlement": 14,
       "maternityEntitlement": 90
-    },
-    {
-      "county": "Meru County",
-      "name": "Martin Kimathi",
-      "cadre": "Social Worker",
-      "sex": "M",
-      "idNo": "20592920",
-      "phone": "0721789404",
-      "email": "kimathim23@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 14
-    },
-    {
-      "county": "Meru County",
-      "name": "Mary Kabeti",
-      "cadre": "Clinical Officer",
-      "sex": "F",
-      "idNo": "33897067",
-      "phone": "0715176284",
-      "email": "marykabeti98@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 90
-    },
-    {
-      "county": "Meru County",
-      "name": "Mathew Mutuma Ntonja",
-      "cadre": "Social Worker",
-      "sex": "M",
-      "idNo": "24549645",
-      "phone": "0724859692",
-      "email": "mathewmutuma@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 14
     },
     {
       "county": "Meru County",
@@ -1333,18 +1249,6 @@
       "idNo": "28774718",
       "phone": "0706147596",
       "email": "peninah.twish@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 90
-    },
-    {
-      "county": "Meru County",
-      "name": "Peninah Mwendwa",
-      "cadre": "Health Records Information Officer",
-      "sex": "F",
-      "idNo": "28260746",
-      "phone": "0748977146",
-      "email": "mwendwapeninah93@gmail.com",
       "annualEntitlement": 30,
       "sickEntitlement": 14,
       "maternityEntitlement": 90
@@ -2179,18 +2083,6 @@
     },
     {
       "county": "Tharaka-Nithi County",
-      "name": "Isabellah Karema Mugao",
-      "cadre": "Nurse",
-      "sex": "F",
-      "idNo": "31233470",
-      "phone": "0701691159",
-      "email": "isabellahkarema@gmail.com",
-      "annualEntitlement": 30,
-      "sickEntitlement": 14,
-      "maternityEntitlement": 90
-    },
-    {
-      "county": "Tharaka-Nithi County",
       "name": "Janet Gatwiri Mutegi",
       "cadre": "HTS Counselor",
       "sex": "F",
@@ -2389,6 +2281,42 @@
       "idNo": "36298023",
       "phone": "0722235618",
       "email": "mutembeiy48@gmail.com",
+      "annualEntitlement": 30,
+      "sickEntitlement": 14,
+      "maternityEntitlement": 90
+    },
+    {
+      "county": "Meru County",
+      "name": "Millicent Marigu Mwangi",
+      "cadre": "HRIO",
+      "sex": "F",
+      "idNo": "37079350",
+      "phone": "0702969933",
+      "email": "millicent.marigu.mwangi@chak.org",
+      "annualEntitlement": 30,
+      "sickEntitlement": 14,
+      "maternityEntitlement": 90
+    },
+    {
+      "county": "Meru County",
+      "name": "Erica Kanana",
+      "cadre": "Nurse",
+      "sex": "F",
+      "idNo": "32796732",
+      "phone": "0741780009",
+      "email": "erica.kanana@chak.org",
+      "annualEntitlement": 30,
+      "sickEntitlement": 14,
+      "maternityEntitlement": 90
+    },
+    {
+      "county": "Tharaka Nithi County",
+      "name": "Hosea Kimathi Makembo",
+      "cadre": "Nurse",
+      "sex": "M",
+      "idNo": "39805179",
+      "phone": "0723264631",
+      "email": "hosea.kimathi.makembo@chak.org",
       "annualEntitlement": 30,
       "sickEntitlement": 14,
       "maternityEntitlement": 90
@@ -6397,29 +6325,6 @@
     },
     {
       "county": "Meru County",
-      "name": "Agnes Gakii Mutuma",
-      "cadre": "Social Worker",
-      "annual": {
-        "entitlement": 30,
-        "used": 0,
-        "remaining": 30,
-        "pct": 0
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 90,
-        "used": 0,
-        "remaining": 90,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
       "name": "Alex Kaibiria Kanake",
       "cadre": "Clinical Officer",
       "annual": {
@@ -6737,29 +6642,6 @@
         "entitlement": 14,
         "used": 0,
         "remaining": 14,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
-      "name": "Dorcas Amatine Oranga",
-      "cadre": "Social Worker",
-      "annual": {
-        "entitlement": 30,
-        "used": 0,
-        "remaining": 30,
-        "pct": 0
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 90,
-        "used": 0,
-        "remaining": 90,
         "pct": 0
       }
     },
@@ -7340,29 +7222,6 @@
     },
     {
       "county": "Meru County",
-      "name": "Joy Makena Mwiti",
-      "cadre": "Social Worker",
-      "annual": {
-        "entitlement": 30,
-        "used": 0,
-        "remaining": 30,
-        "pct": 0
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 90,
-        "used": 0,
-        "remaining": 90,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
       "name": "Juster Kendi",
       "cadre": "Social Worker",
       "annual": {
@@ -7370,29 +7229,6 @@
         "used": 15,
         "remaining": 15,
         "pct": 0.5
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 90,
-        "used": 0,
-        "remaining": 90,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
-      "name": "Kelvin Mwenda Gitari",
-      "cadre": "Social Worker",
-      "annual": {
-        "entitlement": 30,
-        "used": 0,
-        "remaining": 30,
-        "pct": 0
       },
       "sick": {
         "entitlement": 14,
@@ -7588,75 +7424,6 @@
         "entitlement": 90,
         "used": 0,
         "remaining": 90,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
-      "name": "Martin Kimathi",
-      "cadre": "Social Worker",
-      "annual": {
-        "entitlement": 30,
-        "used": 0,
-        "remaining": 30,
-        "pct": 0
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
-      "name": "Mary Kabeti",
-      "cadre": "Clinical Officer",
-      "annual": {
-        "entitlement": 30,
-        "used": 5,
-        "remaining": 25,
-        "pct": 0.1667
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 90,
-        "used": 0,
-        "remaining": 90,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
-      "name": "Mathew Mutuma Ntonja",
-      "cadre": "Social Worker",
-      "annual": {
-        "entitlement": 30,
-        "used": 0,
-        "remaining": 30,
-        "pct": 0
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
         "pct": 0
       }
     },
@@ -7876,29 +7643,6 @@
         "used": 15,
         "remaining": 15,
         "pct": 0.5
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 90,
-        "used": 0,
-        "remaining": 90,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Meru County",
-      "name": "Peninah Mwendwa",
-      "cadre": "Health Records Information Officer",
-      "annual": {
-        "entitlement": 30,
-        "used": 0,
-        "remaining": 30,
-        "pct": 0
       },
       "sick": {
         "entitlement": 14,
@@ -9502,29 +9246,6 @@
     },
     {
       "county": "Tharaka-Nithi County",
-      "name": "Isabellah Karema Mugao",
-      "cadre": "Nurse",
-      "annual": {
-        "entitlement": 30,
-        "used": 3,
-        "remaining": 27,
-        "pct": 0.1
-      },
-      "sick": {
-        "entitlement": 14,
-        "used": 0,
-        "remaining": 14,
-        "pct": 0
-      },
-      "maternity": {
-        "entitlement": 90,
-        "used": 0,
-        "remaining": 90,
-        "pct": 0
-      }
-    },
-    {
-      "county": "Tharaka-Nithi County",
       "name": "Janet Gatwiri Mutegi",
       "cadre": "HTS Counselor",
       "annual": {
@@ -9900,6 +9621,75 @@
         "used": 10,
         "remaining": 20,
         "pct": 0.3333
+      },
+      "sick": {
+        "entitlement": 14,
+        "used": 0,
+        "remaining": 14,
+        "pct": 0
+      },
+      "maternity": {
+        "entitlement": 90,
+        "used": 0,
+        "remaining": 90,
+        "pct": 0
+      }
+    },
+    {
+      "county": "Meru County",
+      "name": "Millicent Marigu Mwangi",
+      "cadre": "HRIO",
+      "annual": {
+        "entitlement": 30,
+        "used": 0,
+        "remaining": 30,
+        "pct": 0
+      },
+      "sick": {
+        "entitlement": 14,
+        "used": 0,
+        "remaining": 14,
+        "pct": 0
+      },
+      "maternity": {
+        "entitlement": 90,
+        "used": 0,
+        "remaining": 90,
+        "pct": 0
+      }
+    },
+    {
+      "county": "Meru County",
+      "name": "Erica Kanana",
+      "cadre": "Nurse",
+      "annual": {
+        "entitlement": 30,
+        "used": 0,
+        "remaining": 30,
+        "pct": 0
+      },
+      "sick": {
+        "entitlement": 14,
+        "used": 0,
+        "remaining": 14,
+        "pct": 0
+      },
+      "maternity": {
+        "entitlement": 90,
+        "used": 0,
+        "remaining": 90,
+        "pct": 0
+      }
+    },
+    {
+      "county": "Tharaka Nithi County",
+      "name": "Hosea Kimathi Makembo",
+      "cadre": "Nurse",
+      "annual": {
+        "entitlement": 30,
+        "used": 0,
+        "remaining": 30,
+        "pct": 0
       },
       "sick": {
         "entitlement": 14,
@@ -14960,6 +14750,87 @@
       "telephone": "10",
       "ID": "8",
       "PROP": "Marimanti Sub County Hospital",
+      "contractEnd": "2026-09-30"
+    },
+    {
+      "EMPLOYEE NAME": "Millicent Marigu Mwangi",
+      "GENDER": "F",
+      "TELEPHONE NO.": "0702969933",
+      "ID No": "37079350",
+      "email address": "millicent.marigu.mwangi@chak.org",
+      "DESIGNATION": "HRIO",
+      "COUNTY": "Meru County",
+      "SUB COUNTY": "Tigania Central",
+      "STATION": "Mikinduri Sub County Hospital",
+      "DATE EMPLOYED": "2026-04-13",
+      "DOB": "1999-12-15",
+      "DOB Cleaned": "15/12/1999",
+      "AGE": "26",
+      "EDUCATION LEVEL": "Degree",
+      "QUALIFICATION": "BSC in Health Records & Information Sciences",
+      "Sub County HospitalOOL": "",
+      "others": "",
+      "REGULATORY BODY": "",
+      "PRACTISING LICENCE": "",
+      "VALID UNTIL": "",
+      "status": "",
+      "telephone": "",
+      "ID": "",
+      "PROP": "Mikinduri Sub County Hospital",
+      "contractEnd": "2026-09-30"
+    },
+    {
+      "EMPLOYEE NAME": "Erica Kanana",
+      "GENDER": "F",
+      "TELEPHONE NO.": "0741780009",
+      "ID No": "32796732",
+      "email address": "erica.kanana@chak.org",
+      "DESIGNATION": "Nurse",
+      "COUNTY": "Meru County",
+      "SUB COUNTY": "Tigania East",
+      "STATION": "St. John Of God",
+      "DATE EMPLOYED": "2026-04-21",
+      "DOB": "1995-05-10",
+      "DOB Cleaned": "10/05/1995",
+      "AGE": "31",
+      "EDUCATION LEVEL": "Diploma",
+      "QUALIFICATION": "Kenya Registered Community Health Nursing",
+      "Sub County HospitalOOL": "",
+      "others": "",
+      "REGULATORY BODY": "Nursing Council of Kenya (NCK)",
+      "PRACTISING LICENCE": "51",
+      "VALID UNTIL": "2026-09-30",
+      "status": "",
+      "telephone": "",
+      "ID": "",
+      "PROP": "St. John Of God",
+      "contractEnd": "2026-09-30"
+    },
+    {
+      "EMPLOYEE NAME": "Hosea Kimathi Makembo",
+      "GENDER": "M",
+      "TELEPHONE NO.": "0723264631",
+      "ID No": "39805179",
+      "email address": "hosea.kimathi.makembo@chak.org",
+      "DESIGNATION": "Nurse",
+      "COUNTY": "Tharaka Nithi County",
+      "SUB COUNTY": "Chuka",
+      "STATION": "Chuka County Referral Hospital",
+      "DATE EMPLOYED": "2026-02-21",
+      "DOB": "2002-10-09",
+      "DOB Cleaned": "09/10/2002",
+      "AGE": "23",
+      "EDUCATION LEVEL": "Diploma",
+      "QUALIFICATION": "Diploma in Commu",
+      "Sub County HospitalOOL": "",
+      "others": "",
+      "REGULATORY BODY": "",
+      "PRACTISING LICENCE": "",
+      "VALID UNTIL": "",
+      "status": "",
+      "telephone": "",
+      "ID": "",
+      "PROP": "Chuka County Referral Hospital",
       "contractEnd": "2026-09-30"
     }
   ]
