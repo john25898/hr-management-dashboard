@@ -130,6 +130,16 @@ export default function DisabilitiesPage() {
     designation: "",
     phone: "",
     supportNeeded: "",
+    idNo: "",
+    dob: "",
+    dateEmployed: "",
+    contractEnd: "",
+    educationLevel: "",
+    qualification: "",
+    othersCert: "",
+    regulatoryBody: "",
+    licenceNo: "",
+    validUntil: "",
   });
 
   // Initialize test data if none exists
@@ -162,6 +172,16 @@ export default function DisabilitiesPage() {
       designation: "",
       phone: "",
       supportNeeded: "",
+      idNo: "",
+      dob: "",
+      dateEmployed: "",
+      contractEnd: "",
+      educationLevel: "",
+      qualification: "",
+      othersCert: "",
+      regulatoryBody: "",
+      licenceNo: "",
+      validUntil: "",
     });
     setShowForm(false);
   };
@@ -347,6 +367,150 @@ export default function DisabilitiesPage() {
                   }
                 />
               </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  ID Number
+                </label>
+                <Input
+                  placeholder="National ID"
+                  value={newRecord.idNo}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({ ...prev, idNo: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Date of Birth
+                </label>
+                <Input
+                  type="date"
+                  value={newRecord.dob}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({ ...prev, dob: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Date Employed
+                </label>
+                <Input
+                  type="date"
+                  value={newRecord.dateEmployed}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      dateEmployed: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Contract End
+                </label>
+                <Input
+                  type="date"
+                  value={newRecord.contractEnd}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      contractEnd: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Education Level
+                </label>
+                <Input
+                  placeholder="e.g. Diploma, Degree"
+                  value={newRecord.educationLevel}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      educationLevel: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Qualification
+                </label>
+                <Input
+                  placeholder="e.g. Diploma in Health Records"
+                  value={newRecord.qualification}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      qualification: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Other Certifications
+                </label>
+                <Input
+                  placeholder="Additional certifications"
+                  value={newRecord.othersCert}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      othersCert: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Regulatory Body
+                </label>
+                <Input
+                  placeholder="Regulatory body"
+                  value={newRecord.regulatoryBody}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      regulatoryBody: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Practice Licence No
+                </label>
+                <Input
+                  placeholder="Licence number"
+                  value={newRecord.licenceNo}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      licenceNo: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Licence Valid Until
+                </label>
+                <Input
+                  type="date"
+                  value={newRecord.validUntil}
+                  onChange={(e) =>
+                    setNewRecord((prev) => ({
+                      ...prev,
+                      validUntil: e.target.value,
+                    }))
+                  }
+                />
+              </div>
               <div className="md:col-span-2 lg:col-span-1">
                 <label className="text-sm font-medium mb-1 block">
                   Support Needed
@@ -477,6 +641,21 @@ export default function DisabilitiesPage() {
                     <TableHead className="font-semibold">County</TableHead>
                     <TableHead className="font-semibold">Facility</TableHead>
                     <TableHead className="font-semibold">Designation</TableHead>
+                    <TableHead className="font-semibold">ID No</TableHead>
+                    <TableHead className="font-semibold">DOB</TableHead>
+                    <TableHead className="font-semibold">
+                      Date Employed
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      Education Level
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      Qualification
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      Regulatory Body
+                    </TableHead>
+                    <TableHead className="font-semibold">Licence No</TableHead>
                     <TableHead className="font-semibold">
                       Support Needed
                     </TableHead>
@@ -513,6 +692,30 @@ export default function DisabilitiesPage() {
                       </TableCell>
                       <TableCell className="text-sm">
                         {record.designation || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {record.idNo || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm whitespace-nowrap">
+                        {record.dob || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm whitespace-nowrap">
+                        {record.dateEmployed || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {record.educationLevel || "-"}
+                      </TableCell>
+                      <TableCell
+                        className="text-sm max-w-[160px] truncate"
+                        title={record.qualification}
+                      >
+                        {record.qualification || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {record.regulatoryBody || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {record.licenceNo || "-"}
                       </TableCell>
                       <TableCell
                         className="text-sm text-muted-foreground max-w-[200px] truncate"

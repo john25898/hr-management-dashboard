@@ -40,22 +40,42 @@ export function NewWorkerModal({
   const [gender, setGender] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [idNo, setIdNo] = React.useState("");
+  const [dob, setDob] = React.useState("");
   const [county, setCounty] = React.useState("");
+  const [subCounty, setSubCounty] = React.useState("");
   const [facility, setFacility] = React.useState("");
   const [designation, setDesignation] = React.useState("");
+  const [designationGroup, setDesignationGroup] = React.useState("");
+  const [designationOriginal, setDesignationOriginal] = React.useState("");
   const [dateEmployed, setDateEmployed] = React.useState("");
+  const [contractEnd, setContractEnd] = React.useState("");
   const [educationLevel, setEducationLevel] = React.useState("");
+  const [qualification, setQualification] = React.useState("");
+  const [othersCert, setOthersCert] = React.useState("");
+  const [regulatoryBody, setRegulatoryBody] = React.useState("");
+  const [licenceNo, setLicenceNo] = React.useState("");
+  const [validUntil, setValidUntil] = React.useState("");
 
   const reset = () => {
     setName("");
     setGender("");
     setPhone("");
     setIdNo("");
+    setDob("");
     setCounty("");
+    setSubCounty("");
     setFacility("");
     setDesignation("");
+    setDesignationGroup("");
+    setDesignationOriginal("");
     setDateEmployed("");
+    setContractEnd("");
     setEducationLevel("");
+    setQualification("");
+    setOthersCert("");
+    setRegulatoryBody("");
+    setLicenceNo("");
+    setValidUntil("");
   };
 
   React.useEffect(() => {
@@ -71,15 +91,20 @@ export function NewWorkerModal({
       phone,
       idNo,
       county,
-      subCounty: "",
+      subCounty,
       facility,
       designation,
+      designationGroup,
+      designationOriginal,
       dateEmployed: dateEmployed || new Date().toISOString(),
+      contractEnd,
+      dob,
       educationLevel,
-      qualification: "",
-      regulatoryBody: "",
-      licenceNo: "",
-      validUntil: "",
+      qualification,
+      othersCert,
+      regulatoryBody,
+      licenceNo,
+      validUntil,
     };
     addNewWorker(record);
     reset();
@@ -96,7 +121,7 @@ export function NewWorkerModal({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-popover p-0 shadow-2xl ring-1 ring-foreground/10 mx-4">
+      <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-popover p-0 shadow-2xl ring-1 ring-foreground/10 mx-4">
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-popover px-6 py-4 rounded-t-xl">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
@@ -155,6 +180,17 @@ export function NewWorkerModal({
               </select>
             </div>
             <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
               <label className="text-sm font-medium mb-1.5 block">Phone</label>
               <input
                 value={phone}
@@ -195,7 +231,18 @@ export function NewWorkerModal({
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">
-                Facility
+                Sub County
+              </label>
+              <input
+                value={subCounty}
+                onChange={(e) => setSubCounty(e.target.value)}
+                placeholder="e.g. Mbeere North"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Facility / Station
               </label>
               <select
                 value={facility}
@@ -229,6 +276,28 @@ export function NewWorkerModal({
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">
+                Designation Group
+              </label>
+              <input
+                value={designationGroup}
+                onChange={(e) => setDesignationGroup(e.target.value)}
+                placeholder="e.g. HRIO"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Designation (Full Title)
+              </label>
+              <input
+                value={designationOriginal}
+                onChange={(e) => setDesignationOriginal(e.target.value)}
+                placeholder="e.g. Health Records Information Officer"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
                 Date Employed
               </label>
               <input
@@ -238,17 +307,83 @@ export function NewWorkerModal({
                 className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">
-              Education Level
-            </label>
-            <input
-              value={educationLevel}
-              onChange={(e) => setEducationLevel(e.target.value)}
-              placeholder="e.g. Diploma, Degree"
-              className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            />
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Contract End
+              </label>
+              <input
+                type="date"
+                value={contractEnd}
+                onChange={(e) => setContractEnd(e.target.value)}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Education Level
+              </label>
+              <input
+                value={educationLevel}
+                onChange={(e) => setEducationLevel(e.target.value)}
+                placeholder="e.g. Diploma, Degree"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Qualification
+              </label>
+              <input
+                value={qualification}
+                onChange={(e) => setQualification(e.target.value)}
+                placeholder="e.g. Diploma in Health Records & IT"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Other Certifications
+              </label>
+              <input
+                value={othersCert}
+                onChange={(e) => setOthersCert(e.target.value)}
+                placeholder="Additional certifications"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Regulatory Body
+              </label>
+              <input
+                value={regulatoryBody}
+                onChange={(e) => setRegulatoryBody(e.target.value)}
+                placeholder="e.g. Health Records and Information Managers Board"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Practice Licence No
+              </label>
+              <input
+                value={licenceNo}
+                onChange={(e) => setLicenceNo(e.target.value)}
+                placeholder="Licence number"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Licence Valid Until
+              </label>
+              <input
+                type="date"
+                value={validUntil}
+                onChange={(e) => setValidUntil(e.target.value)}
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>

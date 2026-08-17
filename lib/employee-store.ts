@@ -18,6 +18,17 @@ export interface DisabilityRecord {
   designation: string;
   phone: string;
   supportNeeded: string;
+  // Extended master-DB fields (UJTP master workbook)
+  idNo?: string;
+  dob?: string;
+  dateEmployed?: string;
+  contractEnd?: string;
+  educationLevel?: string;
+  qualification?: string;
+  othersCert?: string;
+  regulatoryBody?: string;
+  licenceNo?: string;
+  validUntil?: string;
 }
 
 export interface TransferRecord {
@@ -44,9 +55,14 @@ export interface NewWorkerRecord {
   subCounty: string;
   facility: string;
   designation: string;
+  designationGroup: string;
+  designationOriginal: string;
   dateEmployed: string;
+  contractEnd: string;
+  dob: string;
   educationLevel: string;
   qualification: string;
+  othersCert: string;
   regulatoryBody: string;
   licenceNo: string;
   validUntil: string;

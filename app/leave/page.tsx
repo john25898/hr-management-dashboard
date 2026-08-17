@@ -86,9 +86,10 @@ export default function LeavePage() {
   const syncedStaff: any[] = syncData?.staff || [];
 
   // Full staff list for filters / Gantt / balances / availability:
-  // central roster (181) + any staff mirrored from CMaT that aren't in the
-  // central dataset yet. The 8 logistics staff are managed in the separate
-  // logistics portal (CHAK Logistics Portal) and are NOT part of this roster.
+  // the 187 HRH staff from the tracker workbook are the system of record.
+  // The central roster (181) and CMaT-mirrored staff only appear as a
+  // fallback if the tracker data is ever unavailable. This guarantees every
+  // part of the leave tab uses the same 187 (HRH only, no logistics).
   const employees = React.useMemo(() => {
     const seen = new Map<string, any>();
     const add = (name: string, extra: any = {}) => {
@@ -98,23 +99,37 @@ export default function LeavePage() {
         seen.set(key, { name: name.trim(), ...extra });
       }
     };
-    rosterEmployees.forEach((e: any) =>
-      add(e.name, {
-        facility: e.station || e.facility || "",
-        county: e.county || "",
-        email: e.email || "",
-        designation: e.designation || "",
-      }),
-    );
-    syncedStaff.forEach((s: any) =>
-      add(s.name || s.staffName || s.email, {
-        facility: s.facility || "",
-        county: s.county || "",
-        email: s.email || s.staffEmail || "",
-        designation: s.jobTitle || "",
-        isSynced: true,
-      }),
-    );
+    const trackerStaff: any[] = (trackerData as any).staff || [];
+    if (trackerStaff.length > 0) {
+      trackerStaff.forEach((s: any) =>
+        add(s.name, {
+          county: (s.county || "").replace(/\s*County$/i, ""),
+          cadre: s.cadre || "",
+          email: s.email || "",
+          phone: s.phone || "",
+          idNo: s.idNo || "",
+          sex: s.sex || "",
+        }),
+      );
+    } else {
+      rosterEmployees.forEach((e: any) =>
+        add(e.name, {
+          facility: e.station || e.facility || "",
+          county: e.county || "",
+          email: e.email || "",
+          designation: e.designation || "",
+        }),
+      );
+      syncedStaff.forEach((s: any) =>
+        add(s.name || s.staffName || s.email, {
+          facility: s.facility || "",
+          county: s.county || "",
+          email: s.email || s.staffEmail || "",
+          designation: s.jobTitle || "",
+          isSynced: true,
+        }),
+      );
+    }
     return Array.from(seen.values()).sort((a, b) =>
       a.name.localeCompare(b.name),
     );
@@ -399,65 +414,100 @@ export default function LeavePage() {
     });
   };
 
-  const exportCSV = () => {
+  // Export the UJTP master database as an Excel file — same columns as the
+  // master workbook (NAME, GENDER, DOB, ID NO, qualification, licence, …).
+  const exportExcel = async () => {
+    const XLSX = await import("xlsx");
+    // Master DB rows: central roster (includes all UJTP master fields). If the
+    // roster is empty (e.g. data not loaded yet) fall back to tracker staff.
+    const rows: any[] =
+      rosterEmployees.length > 0
+        ? rosterEmployees
+        : (trackerData as any).staff || [];
     const headers = [
-      "Employee",
-      "Leave Type",
-      "Start Date",
-      "End Date",
-      "Days",
-      "Status",
+      "NAME",
+      "GENDER",
+      "PHONE",
+      "ID NO",
+      "DESIGNATION",
+      "DESIGNATION GROUP",
+      "DESIGNATION (FULL)",
+      "COUNTY",
+      "SUB COUNTY",
+      "STATION/FACILITY",
+      "DATE EMPLOYED",
+      "CONTRACT END",
+      "DOB",
+      "EDUCATION LEVEL",
+      "QUALIFICATION",
+      "OTHER CERTIFICATIONS",
+      "REGULATORY BODY",
+      "PRACTICE LICENCE NO",
+      "LICENCE VALID UNTIL",
+      "AGE",
+      "STATUS",
     ];
-    const rows = filteredLog.map((l: any) => [
-      l.employee,
-      l.leaveType,
-      l.startDate,
-      l.endDate,
-      l.days,
-      l.status,
-    ]);
-    const csv = [headers, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "leave-log-2026.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    const data = rows.map((e: any) => ({
+      NAME: e.name,
+      GENDER: e.gender || e.sex || "",
+      PHONE: e.phone || "",
+      "ID NO": e.idNo || "",
+      DESIGNATION: e.designation || e.cadre || "",
+      "DESIGNATION GROUP": e.designationGroup || "",
+      "DESIGNATION (FULL)": e.designationOriginal || "",
+      COUNTY: e.county || "",
+      "SUB COUNTY": e.subCounty || "",
+      "STATION/FACILITY": e.station || e.facility || "",
+      "DATE EMPLOYED": e.dateEmployed || "",
+      "CONTRACT END": e.contractEnd || "",
+      DOB: e.dob || "",
+      "EDUCATION LEVEL": e.educationLevel || "",
+      QUALIFICATION: e.qualification || "",
+      "OTHER CERTIFICATIONS": e.othersCert || "",
+      "REGULATORY BODY": e.regulatoryBody || "",
+      "PRACTICE LICENCE NO": e.practiseeLicence || e.licenceNo || "",
+      "LICENCE VALID UNTIL": e.validUntil || "",
+      AGE: e.age ?? "",
+      STATUS: e.isDeparted ? "Departed" : "Active",
+    }));
+    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+    ws["!cols"] = headers.map((h) => ({
+      wch: Math.max(h.length + 2, 12),
+    }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "UJTP Master DB");
+    XLSX.writeFile(wb, "ujtp-master-db.xlsx");
   };
 
-  // Client-side balances: real Leave-Planner entitlements minus ALL approved
-  // usage (Excel log + local entries + CMaT-synced entries). Staff who are not
-  // tracked in the Leave Planner show "—" instead of a fabricated entitlement.
+  // Client-side balances: real HRH tracker entitlements — 187 staff with
+  // annual / sick / maternity buckets straight from the tracker workbook
+  // (hrh-leave-tracker-data.json). Leave types the tracker doesn't track
+  // (adoption, study, etc.) show "—" instead of a fabricated entitlement.
   const computedBalances = React.useMemo(() => {
-    return employees.map((e: any) => {
-      const planner = balances.find((x: any) => x.employee === e.name);
+    return trackerUtil.map((u: any) => {
       const breakdown = leaveTypes.map((t: any) => {
-        const used = leaveLog
-          .filter(
-            (l: any) =>
-              l.employee === e.name &&
-              l.leaveType === t.name &&
-              l.status === "Approved",
-          )
-          .reduce((sum: number, l: any) => sum + (l.days || 0), 0);
-        const ent = planner?.breakdown?.find(
-          (bt: any) => bt.type === t.name,
-        )?.entitlement;
+        // Map the tracker's entitlement buckets to the matching columns.
+        const src =
+          t.name === "Annual Leave"
+            ? u.annual
+            : t.name === "Sick Leave"
+              ? u.sick
+              : t.name === "Maternity Leave"
+                ? u.maternity
+                : null;
+        const ent = src?.entitlement;
         const hasEntitlement = ent !== undefined && ent !== null;
         return {
           type: t.name,
           entitlement: hasEntitlement ? ent : null,
-          used,
-          balance: hasEntitlement ? ent - used : used > 0 ? -used : 0,
+          used: hasEntitlement ? (src.used ?? 0) : 0,
+          balance: hasEntitlement ? (src.remaining ?? 0) : 0,
           hasEntitlement,
         };
       });
-      return { employee: e.name, breakdown };
+      return { employee: u.name, cadre: u.cadre, county: u.county, breakdown };
     });
-  }, [employees, leaveTypes, leaveLog, balances]);
+  }, [trackerUtil, leaveTypes]);
 
   const getTypeColor = (name: string) =>
     leaveTypes.find((t) => t.name === name)?.color || "#64748b";
@@ -492,8 +542,8 @@ export default function LeavePage() {
           </p>
         </div>
         <div className="flex gap-2 no-print">
-          <Button variant="outline" size="sm" onClick={exportCSV}>
-            <Download className="mr-2 h-4 w-4" /> Export CSV
+          <Button variant="outline" size="sm" onClick={exportExcel}>
+            <Download className="mr-2 h-4 w-4" /> Export Excel (Master DB)
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}>
             <Printer className="mr-2 h-4 w-4" /> Print Report
@@ -503,83 +553,84 @@ export default function LeavePage() {
 
       {/* Executive dashboard merged into the Summary Dashboard tab */}
       <HrhLeaveTracker
+        kpiExtra={
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  On Leave Now
+                </CardTitle>
+                <Plane className="h-5 w-5 text-purple-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {kpis.onLeaveNow}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {kpis.onLeaveNames.length > 0
+                    ? kpis.onLeaveNames.slice(0, 2).join(", ") +
+                      (kpis.onLeaveNames.length > 2 ? "…" : "")
+                    : "everyone available"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Pending Requests
+                </CardTitle>
+                <Clock className="h-5 w-5 text-amber-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-600">
+                  {kpis.pending}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  awaiting approval
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Days Used (2026)
+                </CardTitle>
+                <CalendarDays className="h-5 w-5 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{kpis.totalDaysUsed}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  approved leave days
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Annual Leave Balance
+                </CardTitle>
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {kpis.totalBalance}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {" "}
+                    / {kpis.totalEntitlement} days
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  remaining across staff
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        }
         summaryExtra={
           <>
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    On Leave Now
-                  </CardTitle>
-                  <Plane className="h-5 w-5 text-purple-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {kpis.onLeaveNow}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {kpis.onLeaveNames.length > 0
-                      ? kpis.onLeaveNames.slice(0, 2).join(", ") +
-                        (kpis.onLeaveNames.length > 2 ? "…" : "")
-                      : "everyone available"}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Pending Requests
-                  </CardTitle>
-                  <Clock className="h-5 w-5 text-amber-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-amber-600">
-                    {kpis.pending}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    awaiting approval
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Days Used (2026)
-                  </CardTitle>
-                  <CalendarDays className="h-5 w-5 text-orange-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{kpis.totalDaysUsed}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    approved leave days
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Annual Leave Balance
-                  </CardTitle>
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {kpis.totalBalance}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {" "}
-                      / {kpis.totalEntitlement} days
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    remaining across staff
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-            {/* Overlap Alerts */}
             {overlaps.length > 0 && (
               <Card className="border-red-200 bg-red-50/50">
                 <CardHeader className="flex flex-row items-center gap-2 space-y-0">
@@ -1054,7 +1105,7 @@ export default function LeavePage() {
               <CardHeader>
                 <CardTitle>Automatic Leave Balances</CardTitle>
                 <CardDescription>
-                  Entitlement minus approved usage per staff member
+                  HRH tracker entitlements minus approved usage per staff member
                 </CardDescription>
               </CardHeader>
               <CardContent>

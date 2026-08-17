@@ -110,7 +110,7 @@ const monthLabel = (d: string) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab 1 — Summary Dashboard (mirrors the Excel "Summary Dashboard" sheet)
 // ─────────────────────────────────────────────────────────────────────────────
-function SummaryTab() {
+function SummaryTab({ kpiExtra }: { kpiExtra?: React.ReactNode }) {
   const countyData = (summary?.leaveByCounty || []).map((c: any) => ({
     ...c,
     label: c.county.replace(" County", ""),
@@ -128,6 +128,30 @@ function SummaryTab() {
   );
   const utilizationPct =
     totalAllocated > 0 ? Math.round((totalTaken / totalAllocated) * 100) : 0;
+
+  // Staff headcount by county / cadre — the Leave by County and Leave by
+  // Department cards count STAFF (from the 187 master list), not leave days.
+  const countyStaffData = React.useMemo(() => {
+    const map = new Map<string, number>();
+    staffMaster.forEach((s: any) => {
+      const c = (s.county || "Unknown").replace(/\s*County$/i, "");
+      map.set(c, (map.get(c) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([county, staff]) => ({ county, label: county, staff }))
+      .sort((a, b) => b.staff - a.staff);
+  }, []);
+
+  const cadreStaffData = React.useMemo(() => {
+    const map = new Map<string, number>();
+    staffMaster.forEach((s: any) => {
+      const c = s.cadre || "Unknown";
+      map.set(c, (map.get(c) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([cadre, staff]) => ({ cadre, staff }))
+      .sort((a, b) => b.staff - a.staff);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -177,6 +201,9 @@ function SummaryTab() {
         </Card>
       </div>
 
+      {/* Executive KPI cards — rendered just above Leave by County */}
+      {kpiExtra}
+
       {/* Leave by County */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -185,7 +212,7 @@ function SummaryTab() {
               <MapPin className="h-4 w-4 text-teal-600" /> Leave by County
             </CardTitle>
             <CardDescription>
-              Total vs taken vs pending leave days per county
+              Staff headcount per county (from the 187 HRH master list)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -194,24 +221,16 @@ function SummaryTab() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>County</TableHead>
-                    <TableHead className="text-center">Total</TableHead>
-                    <TableHead className="text-center">Taken</TableHead>
-                    <TableHead className="text-center">Pending</TableHead>
-                    <TableHead className="w-40">Utilized</TableHead>
+                    <TableHead className="text-center">Staff</TableHead>
+                    <TableHead className="w-40">Share</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {countyData.map((c: any, i: number) => (
+                  {countyStaffData.map((c: any, i: number) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">{c.county}</TableCell>
-                      <TableCell className="text-center">
-                        {c.totalLeaveDays}
-                      </TableCell>
                       <TableCell className="text-center font-semibold">
-                        {c.taken}
-                      </TableCell>
-                      <TableCell className="text-center text-amber-600">
-                        {c.pending}
+                        {c.staff}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -219,12 +238,18 @@ function SummaryTab() {
                             <div
                               className="h-full rounded-full bg-teal-500"
                               style={{
-                                width: `${Math.round((c.pct || 0) * 100)}%`,
+                                width: `${Math.round(
+                                  (c.staff / (summary?.totalStaff || 187)) *
+                                    100,
+                                )}%`,
                               }}
                             />
                           </div>
                           <span className="text-xs font-medium">
-                            {Math.round((c.pct || 0) * 100)}%
+                            {Math.round(
+                              (c.staff / (summary?.totalStaff || 187)) * 100,
+                            )}
+                            %
                           </span>
                         </div>
                       </TableCell>
@@ -235,13 +260,13 @@ function SummaryTab() {
             </div>
             <div className="mt-4 h-48">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={countyData}>
+                <BarChart data={countyStaffData}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="var(--color-border)"
                   />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis />
+                  <YAxis allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "var(--color-card)",
@@ -250,21 +275,9 @@ function SummaryTab() {
                     }}
                   />
                   <Bar
-                    dataKey="totalLeaveDays"
-                    name="Total"
-                    fill="#94a3b8"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="taken"
-                    name="Taken"
+                    dataKey="staff"
+                    name="Staff"
                     fill="#14b8a6"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="pending"
-                    name="Pending"
-                    fill="#f59e0b"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -280,7 +293,7 @@ function SummaryTab() {
               <Briefcase className="h-4 w-4 text-violet-600" /> Leave by
               Department
             </CardTitle>
-            <CardDescription>Leave utilization by cadre</CardDescription>
+            <CardDescription>Staff headcount by cadre</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto max-h-72">
@@ -288,24 +301,16 @@ function SummaryTab() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Cadre</TableHead>
-                    <TableHead className="text-center">Total</TableHead>
-                    <TableHead className="text-center">Taken</TableHead>
-                    <TableHead className="text-center">Pending</TableHead>
-                    <TableHead className="w-32">Utilized</TableHead>
+                    <TableHead className="text-center">Staff</TableHead>
+                    <TableHead className="w-32">Share</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cadreData.map((c: any, i: number) => (
+                  {cadreStaffData.map((c: any, i: number) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">{c.cadre}</TableCell>
-                      <TableCell className="text-center">
-                        {c.totalLeaveDays}
-                      </TableCell>
                       <TableCell className="text-center font-semibold">
-                        {c.taken}
-                      </TableCell>
-                      <TableCell className="text-center text-amber-600">
-                        {c.pending}
+                        {c.staff}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -313,12 +318,18 @@ function SummaryTab() {
                             <div
                               className="h-full rounded-full bg-violet-500"
                               style={{
-                                width: `${Math.round((c.pct || 0) * 100)}%`,
+                                width: `${Math.round(
+                                  (c.staff / (summary?.totalStaff || 187)) *
+                                    100,
+                                )}%`,
                               }}
                             />
                           </div>
                           <span className="text-xs">
-                            {Math.round((c.pct || 0) * 100)}%
+                            {Math.round(
+                              (c.staff / (summary?.totalStaff || 187)) * 100,
+                            )}
+                            %
                           </span>
                         </div>
                       </TableCell>
@@ -328,7 +339,8 @@ function SummaryTab() {
               </Table>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {totalTaken} total days taken across all cadres
+              {summary?.totalStaff ?? 187} staff across {cadreStaffData.length}{" "}
+              cadres
             </p>
           </CardContent>
         </Card>
@@ -1754,8 +1766,10 @@ function HolidaysTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 export function HrhLeaveTracker({
   summaryExtra,
+  kpiExtra,
 }: {
   summaryExtra?: React.ReactNode;
+  kpiExtra?: React.ReactNode;
 }) {
   return (
     <Tabs defaultValue="summary" className="gap-4">
@@ -1779,7 +1793,7 @@ export function HrhLeaveTracker({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="summary" className="mt-0">
-        <SummaryTab />
+        <SummaryTab kpiExtra={kpiExtra} />
         {summaryExtra}
       </TabsContent>
       <TabsContent value="utilization" className="mt-0">
