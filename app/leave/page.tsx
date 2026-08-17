@@ -281,23 +281,6 @@ export default function LeavePage() {
     }));
   }, [leaveLog]);
 
-  const utilization = React.useMemo(() => {
-    const map: Record<string, number> = {};
-    leaveLog
-      .filter((l: any) => l.status === "Approved")
-      .forEach((l: any) => {
-        map[l.employee] = (map[l.employee] || 0) + (l.days || 0);
-      });
-    return employees
-      .map((e: any) => ({
-        name: e.name.split(" ").slice(-1)[0],
-        fullName: e.name,
-        days: map[e.name] || 0,
-      }))
-      .filter((x: any) => x.days > 0)
-      .sort((a, b) => b.days - a.days);
-  }, [leaveLog, employees]);
-
   // ── Overlap detection ──
   const overlaps = React.useMemo(() => {
     const result: any[] = [];
@@ -633,27 +616,85 @@ export default function LeavePage() {
           <>
             {overlaps.length > 0 && (
               <Card className="border-red-200 bg-red-50/50">
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
-                  <CardTitle className="text-sm font-medium text-red-800">
-                    Overlapping Leave Detected ({overlaps.length})
-                  </CardTitle>
+                <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                  <div className="space-y-1">
+                    <CardTitle className="text-sm font-medium text-red-800">
+                      Overlapping Leave Detected ({overlaps.length})
+                    </CardTitle>
+                    <CardDescription className="text-red-600/70">
+                      Staff members with two leave periods that conflict —
+                      review and adjust the affected requests.
+                    </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-1">
-                    {overlaps.map((o: any, i: number) => (
-                      <p key={i} className="text-sm text-red-700">
-                        <strong>{o.employee}</strong>: {o.a.leaveType} (
-                        {o.a.startDate} → {o.a.endDate}) overlaps with{" "}
-                        {o.b.leaveType} ({o.b.startDate} → {o.b.endDate})
-                      </p>
-                    ))}
+                  <div className="max-h-80 overflow-y-auto rounded-lg border border-red-200">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-red-50 z-10">
+                        <TableRow>
+                          <TableHead className="font-semibold text-red-800">
+                            Staff Member
+                          </TableHead>
+                          <TableHead className="font-semibold text-red-800">
+                            Leave Period A
+                          </TableHead>
+                          <TableHead className="font-semibold text-red-800">
+                            Leave Period B
+                          </TableHead>
+                          <TableHead className="font-semibold text-red-800 text-right">
+                            Total Days
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {overlaps.map((o: any, i: number) => (
+                          <TableRow
+                            key={i}
+                            className="bg-white/60 hover:bg-red-50"
+                          >
+                            <TableCell className="font-medium text-red-900">
+                              {o.employee}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-1">
+                                <Badge
+                                  variant="outline"
+                                  className="w-fit border-blue-300 bg-blue-50 text-blue-800"
+                                >
+                                  {o.a.leaveType}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {o.a.startDate} → {o.a.endDate}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-1">
+                                <Badge
+                                  variant="outline"
+                                  className="w-fit border-red-300 bg-red-50 text-red-800"
+                                >
+                                  {o.b.leaveType}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {o.b.startDate} → {o.b.endDate}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-semibold text-red-800">
+                              {o.a.days} + {o.b.days}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 </CardContent>
               </Card>
             )}
             {/* Charts Row */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Leave Type Distribution</CardTitle>
@@ -720,54 +761,6 @@ export default function LeavePage() {
                       />
                     </BarChart>
                   </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Leave Utilization by Employee</CardTitle>
-                  <CardDescription>
-                    Approved leave days per staff member
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {utilization.length === 0 ? (
-                    <div className="flex h-52 items-center justify-center text-sm text-muted-foreground">
-                      No approved leave recorded yet
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={260}>
-                      <BarChart
-                        data={utilization}
-                        layout="vertical"
-                        margin={{ left: 10, right: 10 }}
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="var(--color-border)"
-                        />
-                        <XAxis type="number" />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          width={90}
-                          tick={{ fontSize: 11 }}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "var(--color-card)",
-                            border: "1px solid var(--color-border)",
-                            borderRadius: "0.5rem",
-                          }}
-                        />
-                        <Bar
-                          dataKey="days"
-                          fill="#14b8a6"
-                          radius={[0, 6, 6, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
                 </CardContent>
               </Card>
             </div>
