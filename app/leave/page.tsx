@@ -20,11 +20,11 @@ import {
   CalendarDays,
   Clock,
   AlertTriangle,
-  CheckCircle2,
   Printer,
   Plane,
   Sun,
   Download,
+  Users,
 } from "lucide-react";
 import {
   Table,
@@ -239,6 +239,19 @@ export default function LeavePage() {
       0,
     );
     const onLeaveNames = onLeaveNow.map((l: any) => l.employee);
+    // Approved leave overlapping the current calendar month
+    const [curY, curM] = todayISO.split("-").map(Number);
+    const monthStart = `${curY}-${String(curM).padStart(2, "0")}-01`;
+    const lastDay = new Date(curY, curM, 0).getDate();
+    const monthEnd = `${curY}-${String(curM).padStart(2, "0")}-${String(
+      lastDay,
+    ).padStart(2, "0")}`;
+    const onLeaveThisMonth = leaveLog.filter(
+      (l: any) =>
+        l.status === "Approved" &&
+        l.startDate <= monthEnd &&
+        l.endDate >= monthStart,
+    );
     return {
       onLeaveNow: onLeaveNow.length,
       onLeaveNames: [...new Set(onLeaveNames)],
@@ -246,6 +259,14 @@ export default function LeavePage() {
       totalDaysUsed,
       totalEntitlement,
       totalBalance,
+      availableNow: employees.length - onLeaveNow.length,
+      onLeaveThisMonth: [
+        ...new Set(onLeaveThisMonth.map((l: any) => l.employee)),
+      ].length,
+      onLeaveThisMonthNames: [
+        ...new Set(onLeaveThisMonth.map((l: any) => l.employee)),
+      ],
+      monthLabel: MONTH_NAMES[curM - 1],
     };
   }, [leaveLog, employees, balances, todayISO, trackerUtil]);
 
@@ -578,14 +599,16 @@ export default function LeavePage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Days Used (2026)
+                  Available Now
                 </CardTitle>
-                <CalendarDays className="h-5 w-5 text-orange-600" />
+                <Users className="h-5 w-5 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{kpis.totalDaysUsed}</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {kpis.availableNow}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  approved leave days
+                  of {employees.length} staff available today
                 </p>
               </CardContent>
             </Card>
@@ -593,20 +616,20 @@ export default function LeavePage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Annual Leave Balance
+                  On Leave This Month
                 </CardTitle>
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CalendarDays className="h-5 w-5 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {kpis.totalBalance}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {" "}
-                    / {kpis.totalEntitlement} days
-                  </span>
+                <div className="text-2xl font-bold text-orange-600">
+                  {kpis.onLeaveThisMonth}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  remaining across staff
+                  {kpis.onLeaveThisMonthNames.length > 0
+                    ? kpis.onLeaveThisMonthNames.slice(0, 2).join(", ") +
+                      (kpis.onLeaveThisMonthNames.length > 2 ? "…" : "")
+                    : "no one on leave"}{" "}
+                  · {kpis.monthLabel}
                 </p>
               </CardContent>
             </Card>
