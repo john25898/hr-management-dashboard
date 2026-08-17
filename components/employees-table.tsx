@@ -20,19 +20,23 @@ interface EmployeesTableProps {
   onEmployeeClick?: (employee: Employee) => void;
 }
 
-function getStatusColor(status: string | undefined) {
-  if (!status) return "bg-gray-100 text-gray-800";
-  const statusLower = status.toLowerCase();
-  if (statusLower.includes("active") || statusLower.includes("valid")) {
-    return "bg-green-100 text-green-800";
+function getStatusFromValidUntil(validUntil: string | undefined): {
+  label: string;
+  color: string;
+} {
+  if (!validUntil) return { label: "N/A", color: "bg-gray-100 text-gray-800" };
+  try {
+    const d = new Date(validUntil);
+    const today = new Date();
+    const thirtyDays = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    if (d < today)
+      return { label: "Expired", color: "bg-red-100 text-red-800" };
+    if (d <= thirtyDays)
+      return { label: "Expiring", color: "bg-yellow-100 text-yellow-800" };
+    return { label: "Valid", color: "bg-green-100 text-green-800" };
+  } catch {
+    return { label: validUntil, color: "bg-gray-100 text-gray-800" };
   }
-  if (statusLower.includes("expired") || statusLower.includes("invalid")) {
-    return "bg-red-100 text-red-800";
-  }
-  if (statusLower.includes("expiring") || statusLower.includes("pending")) {
-    return "bg-yellow-100 text-yellow-800";
-  }
-  return "bg-gray-100 text-gray-800";
 }
 
 function getGenderBadge(gender: string | undefined) {
@@ -121,9 +125,11 @@ export function EmployeesTable({
                 </TableCell>
                 <TableCell>
                   <Badge
-                    className={`${getStatusColor(employee.status as string)}`}
+                    className={
+                      getStatusFromValidUntil(employee.validUntil).color
+                    }
                   >
-                    {employee.status || "N/A"}
+                    {getStatusFromValidUntil(employee.validUntil).label}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm">

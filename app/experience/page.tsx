@@ -55,9 +55,10 @@ export default function ExperiencePage() {
         if (!emp.dateEmployed) return null;
         const employed = new Date(emp.dateEmployed);
         return (
-          Math.floor(
-            (now.getTime() - employed.getTime()) /
-              (1000 * 60 * 60 * 24 * 365 * 10),
+          Math.round(
+            ((now.getTime() - employed.getTime()) /
+              (1000 * 60 * 60 * 24 * 365.25)) *
+              10,
           ) / 10
         );
       })
@@ -84,9 +85,10 @@ export default function ExperiencePage() {
     employees.data.forEach((emp: any) => {
       const designation = emp.designation || "Unknown";
       const tenure = emp.dateEmployed
-        ? Math.floor(
-            (new Date().getTime() - new Date(emp.dateEmployed).getTime()) /
-              (1000 * 60 * 60 * 24 * 365 * 10),
+        ? Math.round(
+            ((new Date().getTime() - new Date(emp.dateEmployed).getTime()) /
+              (1000 * 60 * 60 * 24 * 365.25)) *
+              10,
           ) / 10
         : 0;
 
@@ -126,6 +128,35 @@ export default function ExperiencePage() {
       .filter((emp: any) => emp.tenure >= 10)
       .sort((a: any, b: any) => b.tenure - a.tenure)
       .slice(0, 20);
+  }, [employees?.data]);
+
+  // All employees with computed tenure, sorted by tenure descending
+  const allEmployeeTenures = React.useMemo(() => {
+    if (!employees?.data) return [];
+    const todayStr = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    return employees.data
+      .map((emp: any) => {
+        const tenure = emp.dateEmployed
+          ? Math.round(
+              ((new Date().getTime() - new Date(emp.dateEmployed).getTime()) /
+                (1000 * 60 * 60 * 24 * 365.25)) *
+                10,
+            ) / 10
+          : 0;
+        return {
+          name: emp.name || "-",
+          designation: emp.designation || "-",
+          county: emp.county || "-",
+          dateEmployed: emp.dateEmployed,
+          tenure,
+          todayStr,
+        };
+      })
+      .sort((a: any, b: any) => b.tenure - a.tenure);
   }, [employees?.data]);
 
   const experienceByDesignation = React.useMemo(() => {
@@ -229,6 +260,79 @@ export default function ExperiencePage() {
       {analytics?.tenureDistribution && (
         <TenureChart data={analytics.tenureDistribution} />
       )}
+
+      {/* All Employees — Years of Experience */}
+      <Card>
+        <CardHeader>
+          <CardTitle>All Employees — Years of Experience</CardTitle>
+          <CardDescription>
+            Present date: {allEmployeeTenures[0]?.todayStr || "—"} &mdash;{" "}
+            {allEmployeeTenures.length} employees listed by tenure
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="max-h-[600px] overflow-y-auto">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background z-10">
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Designation</TableHead>
+                  <TableHead>County</TableHead>
+                  <TableHead>Date Employed</TableHead>
+                  <TableHead className="text-right">
+                    Years of Experience
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allEmployeeTenures.map((emp: any, idx: number) => (
+                  <TableRow key={idx}>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {idx + 1}
+                    </TableCell>
+                    <TableCell className="font-medium">{emp.name}</TableCell>
+                    <TableCell>{emp.designation}</TableCell>
+                    <TableCell>{emp.county}</TableCell>
+                    <TableCell>
+                      {emp.dateEmployed
+                        ? new Date(emp.dateEmployed).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-right font-bold">
+                      <Badge
+                        variant={
+                          emp.tenure >= 5
+                            ? "default"
+                            : emp.tenure >= 2
+                              ? "secondary"
+                              : "outline"
+                        }
+                        className={
+                          emp.tenure >= 5
+                            ? "bg-green-100 text-green-800 hover:bg-green-100"
+                            : emp.tenure >= 2
+                              ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
+                              : ""
+                        }
+                      >
+                        {emp.tenure} yrs
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Career Progression by Designation */}
       <Card>

@@ -77,8 +77,12 @@ export default function EmployeesPage() {
     );
 
     const designations =
+      analyticsData.designationGroupDistribution?.map(
+        (item: any) => item.name,
+      ) ||
       analyticsData.designationDistribution?.map((item: any) => item.name) ||
       [];
+    [];
     const genders =
       analyticsData.genderDistribution?.map((item: any) => item.name) || [];
     const statuses =

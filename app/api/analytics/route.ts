@@ -4,7 +4,7 @@ import { getExcelData } from '@/lib/excel-data';
 export async function GET() {
   try {
     const data = await getExcelData();
-    
+
     if (!data) {
       return NextResponse.json({ error: 'Failed to load data' }, { status: 500 });
     }
@@ -25,7 +25,14 @@ export async function GET() {
       return acc;
     }, {} as Record<string, number>);
 
-    // Designation distribution
+    // Designation GROUP distribution (merged for filters)
+    const designationGroupCount = employees.reduce((acc, emp) => {
+      const group = emp.designationGroup || emp.designation || 'Unknown';
+      acc[group] = (acc[group] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Individual designation distribution
     const designationCount = employees.reduce((acc, emp) => {
       const designation = emp.designation || 'Unknown';
       acc[designation] = (acc[designation] || 0) + 1;
@@ -41,13 +48,8 @@ export async function GET() {
 
     // Age distribution
     const ageRanges: Record<string, number> = {
-      '20-30': 0,
-      '31-40': 0,
-      '41-50': 0,
-      '51-60': 0,
-      '60+': 0,
+      '20-30': 0, '31-40': 0, '41-50': 0, '51-60': 0, '60+': 0,
     };
-
     employees.forEach(emp => {
       const age = emp.age ? parseInt(String(emp.age)) : null;
       if (age) {
@@ -59,12 +61,31 @@ export async function GET() {
       }
     });
 
-    // Compliance: License status
-    const licenseStatus = employees.reduce((acc, emp) => {
-      const status = emp.status || 'Unknown';
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    // License status based on validUntil dates
+    const today = new Date();
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    let validCount = 0;
+    let expiringCount = 0;
+    let expiredCount = 0;
+    let noLicenseCount = 0;
+
+    employees.forEach(emp => {
+      if (!emp.validUntil) {
+        noLicenseCount++;
+        return;
+      }
+      const expireDate = new Date(emp.validUntil);
+      if (expireDate < today) expiredCount++;
+      else if (expireDate <= thirtyDaysFromNow) expiringCount++;
+      else validCount++;
+    });
+
+    const licenseStatus = {
+      'Valid': validCount,
+      'Expiring': expiringCount,
+      'Expired': expiredCount,
+      'Not Available': noLicenseCount,
+    };
 
     // Regulatory bodies
     const regulatoryBodyCount = employees.reduce((acc, emp) => {
@@ -72,23 +93,6 @@ export async function GET() {
       acc[body] = (acc[body] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-
-    // Count expiring licenses (within next 30 days) - simplified
-    const expiringLicenses = employees.filter(emp => {
-      if (!emp.validUntil) return false;
-      const expireDate = new Date(emp.validUntil);
-      const today = new Date();
-      const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-      return expireDate <= thirtyDaysFromNow && expireDate >= today;
-    }).length;
-
-    // Count expired licenses
-    const expiredLicenses = employees.filter(emp => {
-      if (!emp.validUntil) return false;
-      const expireDate = new Date(emp.validUntil);
-      const today = new Date();
-      return expireDate < today;
-    }).length;
 
     // Sub-county distribution
     const subCountyCount = employees.reduce((acc, emp) => {
@@ -107,13 +111,8 @@ export async function GET() {
     // Tenure ranges
     const now = new Date();
     const tenureRanges: Record<string, number> = {
-      '0-2 years': 0,
-      '2-5 years': 0,
-      '5-10 years': 0,
-      '10-15 years': 0,
-      '15+ years': 0,
+      '0-2 years': 0, '2-5 years': 0, '5-10 years': 0, '10-15 years': 0, '15+ years': 0,
     };
-
     employees.forEach(emp => {
       if (emp.dateEmployed) {
         const employed = new Date(emp.dateEmployed);
@@ -136,69 +135,49 @@ export async function GET() {
     return NextResponse.json({
       summary: {
         totalEmployees: employees.length,
+        totalDeparted: data.departed.length,
         totalLayworkers: data.layworkers.length,
-        expiringLicenses,
-        expiredLicenses,
+        totalPersonnel: data.summary.totalPersonnel,
+        expiringLicenses: expiringCount,
+        expiredLicenses: expiredCount,
+        validLicenses: validCount,
+        designationGroups: data.summary.designationGroups,
       },
       genderDistribution: Object.entries(genderCount).map(([name, value]) => ({
-        name,
-        value,
+        name, value,
       })),
       countyDistribution: Object.entries(countyCount)
         .sort((a, b) => b[1] - a[1])
-        .map(([name, value]) => ({
-          name,
-          value,
-        })),
+        .map(([name, value]) => ({ name, value })),
       designationDistribution: Object.entries(designationCount)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([name, value]) => ({
-          name,
-          value,
-        })),
-      educationDistribution: Object.entries(educationCount).map(([name, value]) => ({
-        name,
-        value,
-      })),
-      ageDistribution: Object.entries(ageRanges).map(([name, value]) => ({
-        name,
-        value,
-      })),
-      licenseStatus: Object.entries(licenseStatus).map(([name, value]) => ({
-        name,
-        value,
-      })),
+        .slice(0, 15)
+        .map(([name, value]) => ({ name, value })),
+      designationGroupDistribution: Object.entries(designationGroupCount)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, value]) => ({ name, value })),
+      educationDistribution: Object.entries(educationCount)
+        .map(([name, value]) => ({ name, value })),
+      ageDistribution: Object.entries(ageRanges)
+        .map(([name, value]) => ({ name, value })),
+      licenseStatus: Object.entries(licenseStatus)
+        .map(([name, value]) => ({ name, value })),
       regulatoryBodies: Object.entries(regulatoryBodyCount)
         .sort((a, b) => b[1] - a[1])
-        .map(([name, value]) => ({
-          name,
-          value,
-        })),
+        .map(([name, value]) => ({ name, value })),
       subCountyDistribution: Object.entries(subCountyCount)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 15)
-        .map(([name, value]) => ({
-          name,
-          value,
-        })),
+        .map(([name, value]) => ({ name, value })),
       facilityDistribution: Object.entries(facilityCount)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 15)
-        .map(([name, value]) => ({
-          name,
-          value,
-        })),
-      tenureDistribution: Object.entries(tenureRanges).map(([name, value]) => ({
-        name,
-        value,
-      })),
+        .map(([name, value]) => ({ name, value })),
+      tenureDistribution: Object.entries(tenureRanges)
+        .map(([name, value]) => ({ name, value })),
       qualifications: Object.entries(qualificationCount)
         .sort((a, b) => b[1] - a[1])
-        .map(([name, value]) => ({
-          name,
-          value,
-        })),
+        .map(([name, value]) => ({ name, value })),
     });
   } catch (error) {
     console.error('Error in analytics API:', error);

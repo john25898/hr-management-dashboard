@@ -166,9 +166,10 @@ export function DashboardContent() {
       .map((emp: any) => {
         if (!emp.dateEmployed) return null;
         return (
-          Math.floor(
-            (now.getTime() - new Date(emp.dateEmployed).getTime()) /
-              (1000 * 60 * 60 * 24 * 365 * 10),
+          Math.round(
+            ((now.getTime() - new Date(emp.dateEmployed).getTime()) /
+              (1000 * 60 * 60 * 24 * 365.25)) *
+              10,
           ) / 10
         );
       })

@@ -132,7 +132,7 @@ function formatDate(date: any) {
 
 export default function DepartedPage() {
   const { data: employees, isLoading } = useSWR(
-    "/api/employees?limit=1000",
+    "/api/employees?limit=1000&includeDeparted=true",
     fetcher,
   );
   const [sortBy, setSortBy] = React.useState<"name" | "date">("date");

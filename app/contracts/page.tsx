@@ -53,7 +53,7 @@ const CONTRACT_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6"];
 
 export default function ContractsPage() {
   const { data: employees, isLoading: employeesLoading } = useSWR(
-    "/api/employees?limit=1000",
+    "/api/employees?limit=1000&includeDeparted=true",
     fetcher,
   );
   const { data: analytics, isLoading: analyticsLoading } = useSWR(
@@ -82,11 +82,11 @@ export default function ContractsPage() {
       noData = 0;
 
     employees.data.forEach((emp: any) => {
-      if (!emp.validUntil) {
+      if (!emp.contractEnd) {
         noData++;
         return;
       }
-      const expireDate = new Date(emp.validUntil);
+      const expireDate = new Date(emp.contractEnd);
       if (expireDate < now) expired++;
       else if (expireDate <= thirtyDaysFromNow) expiring++;
       else valid++;
@@ -102,8 +102,8 @@ export default function ContractsPage() {
     const monthMap: Record<string, number> = {};
 
     employees.data.forEach((emp: any) => {
-      if (!emp.validUntil) return;
-      const d = new Date(emp.validUntil);
+      if (!emp.contractEnd) return;
+      const d = new Date(emp.contractEnd);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       monthMap[key] = (monthMap[key] || 0) + 1;
     });
@@ -133,8 +133,8 @@ export default function ContractsPage() {
       if (!countyMap[county])
         countyMap[county] = { valid: 0, expiring: 0, expired: 0 };
 
-      if (!emp.validUntil) return;
-      const expireDate = new Date(emp.validUntil);
+      if (!emp.contractEnd) return;
+      const expireDate = new Date(emp.contractEnd);
       if (expireDate < now) countyMap[county].expired++;
       else if (expireDate <= thirtyDaysFromNow) countyMap[county].expiring++;
       else countyMap[county].valid++;
@@ -173,15 +173,15 @@ export default function ContractsPage() {
 
       if (contractFilter === "all") return true;
       if (contractFilter === "expired")
-        return emp.validUntil && new Date(emp.validUntil) < now;
+        return emp.contractEnd && new Date(emp.contractEnd) < now;
       if (contractFilter === "expiring") {
-        if (!emp.validUntil) return false;
-        const d = new Date(emp.validUntil);
+        if (!emp.contractEnd) return false;
+        const d = new Date(emp.contractEnd);
         return d >= now && d <= thirtyDaysFromNow;
       }
       if (contractFilter === "valid")
-        return emp.validUntil && new Date(emp.validUntil) > thirtyDaysFromNow;
-      if (contractFilter === "no-date") return !emp.validUntil;
+        return emp.contractEnd && new Date(emp.contractEnd) > thirtyDaysFromNow;
+      if (contractFilter === "no-date") return !emp.contractEnd;
 
       return true;
     });
@@ -236,7 +236,7 @@ export default function ContractsPage() {
               {contractStats.valid}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              up-to-date licenses
+              active contracts
             </p>
           </CardContent>
         </Card>
@@ -292,7 +292,7 @@ export default function ContractsPage() {
           <CardHeader>
             <CardTitle>Contract Status Overview</CardTitle>
             <CardDescription>
-              Current license/contract validity distribution
+              Current contract validity distribution
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -502,8 +502,8 @@ export default function ContractsPage() {
               </TableHeader>
               <TableBody>
                 {filteredEmployees.slice(0, 50).map((emp: any, idx: number) => {
-                  const expireDate = emp.validUntil
-                    ? new Date(emp.validUntil)
+                  const expireDate = emp.contractEnd
+                    ? new Date(emp.contractEnd)
                     : null;
                   const now = new Date();
                   const thirtyDaysFromNow = new Date(
