@@ -170,6 +170,84 @@ export default function ExperiencePage() {
       }));
   }, [analytics]);
 
+  // Extra insights: new hires, long-serving staff, tenure range buckets,
+  // and the single most senior employee.
+  const tenureInsights = React.useMemo(() => {
+    if (!employees?.data)
+      return {
+        newHires: 0,
+        longServing: 0,
+        mostSenior: null,
+        ranges: [],
+      };
+    const now = new Date();
+    const ranges: Record<string, number> = {
+      "0-2 years": 0,
+      "2-5 years": 0,
+      "5-10 years": 0,
+      "10-15 years": 0,
+      "15+ years": 0,
+    };
+    let newHires = 0;
+    let longServing = 0;
+    let mostSenior: any = null;
+    employees.data.forEach((emp: any) => {
+      if (!emp.dateEmployed) return;
+      const years =
+        (now.getTime() - new Date(emp.dateEmployed).getTime()) /
+        (1000 * 60 * 60 * 24 * 365.25);
+      if (years < 1) newHires++;
+      if (years >= 15) longServing++;
+      if (years <= 2) ranges["0-2 years"]++;
+      else if (years <= 5) ranges["2-5 years"]++;
+      else if (years <= 10) ranges["5-10 years"]++;
+      else if (years <= 15) ranges["10-15 years"]++;
+      else ranges["15+ years"]++;
+      if (!mostSenior || years > mostSenior.years) {
+        mostSenior = {
+          name: emp.name || "—",
+          years: Math.round(years * 10) / 10,
+        };
+      }
+    });
+    const max = Math.max(...Object.values(ranges), 1);
+    return {
+      newHires,
+      longServing,
+      mostSenior,
+      ranges: Object.entries(ranges).map(([name, value]) => ({
+        name,
+        value,
+        pct: Math.round((value / max) * 100),
+      })),
+    };
+  }, [employees?.data]);
+
+  // Average tenure per county (top 10) — a second insight chart.
+  const tenureByCounty = React.useMemo(() => {
+    if (!employees?.data) return [];
+    const map: Record<string, number[]> = {};
+    const now = new Date();
+    employees.data.forEach((emp: any) => {
+      if (!emp.dateEmployed) return;
+      const county = emp.county || "Unknown";
+      const years =
+        (now.getTime() - new Date(emp.dateEmployed).getTime()) /
+        (1000 * 60 * 60 * 24 * 365.25);
+      if (!map[county]) map[county] = [];
+      map[county].push(years);
+    });
+    return Object.entries(map)
+      .map(([county, ys]) => ({
+        county,
+        avgTenure:
+          Math.round((ys.reduce((a, b) => a + b, 0) / ys.length) * 10) / 10,
+        count: ys.length,
+      }))
+      .sort((a, b) => b.avgTenure - a.avgTenure)
+      .slice(0, 10);
+  }, [employees?.data]);
+
   if (isLoading) {
     return (
       <div className="p-4 md:p-6 space-y-6">
@@ -220,8 +298,12 @@ export default function ExperiencePage() {
             <Award className="h-5 w-5 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{tenureStats.max}</div>
-            <p className="text-xs text-muted-foreground mt-1">maximum tenure</p>
+            <div className="text-2xl font-bold">
+              {tenureInsights.mostSenior?.years ?? tenureStats.max}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              {tenureInsights.mostSenior?.name || "maximum tenure"}
+            </p>
           </CardContent>
         </Card>
 
@@ -256,10 +338,115 @@ export default function ExperiencePage() {
         </Card>
       </div>
 
-      {/* Tenure Distribution */}
+      {/* Tenure Distribution — fixed mapping so the line chart renders */}
       {analytics?.tenureDistribution && (
-        <TenureChart data={analytics.tenureDistribution} />
+        <TenureChart
+          data={analytics.tenureDistribution.map((d: any) => ({
+            name: d.name,
+            count: d.value,
+          }))}
+        />
       )}
+
+      {/* Experience Insights */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              New Hires (under 1 yr)
+            </CardTitle>
+            <TrendingUp className="h-5 w-5 text-cyan-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-cyan-600">
+              {tenureInsights.newHires}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              joined within the last year
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Long-Serving (15+ yrs)
+            </CardTitle>
+            <Clock className="h-5 w-5 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">
+              {tenureInsights.longServing}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              15 or more years of service
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tenure Range Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tenure Range Distribution</CardTitle>
+          <CardDescription>
+            Staff experience brackets with headcount
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-5">
+            {tenureInsights.ranges.map((r: any) => (
+              <div key={r.name} className="rounded-lg border p-3">
+                <div className="text-2xl font-bold">{r.value}</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  {r.name}
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-purple-500"
+                    style={{ width: `${r.pct}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Average Tenure by County */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Average Tenure by County</CardTitle>
+          <CardDescription>
+            Mean years of service per operational county (top 10)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              data={tenureByCounty}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 110, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis
+                dataKey="county"
+                type="category"
+                width={100}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip />
+              <Bar
+                dataKey="avgTenure"
+                name="Avg years"
+                fill="#8b5cf6"
+                radius={[0, 8, 8, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* All Employees — Years of Experience */}
       <Card>

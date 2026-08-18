@@ -108,7 +108,10 @@ export default function ContractsPage() {
       monthMap[key] = (monthMap[key] || 0) + 1;
     });
 
+    const now = new Date();
+    const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     return Object.entries(monthMap)
+      .filter(([month]) => month >= currentKey)
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(0, 12)
       .map(([month, count]) => ({ month, count }));
@@ -189,7 +192,7 @@ export default function ContractsPage() {
 
   const pieData = [
     { name: "Valid", value: contractStats.valid },
-    { name: "Expiring (30d)", value: contractStats.expiring },
+    { name: "Expiring Soon", value: contractStats.expiring },
     { name: "Expired", value: contractStats.expired },
     { name: "No Data", value: contractStats.noData },
   ].filter((d) => d.value > 0);
@@ -521,7 +524,7 @@ export default function ContractsPage() {
                     status = "Expired";
                     statusColor = "bg-red-100 text-red-800 border-red-300";
                   } else if (expireDate <= thirtyDaysFromNow) {
-                    status = "Expiring";
+                    status = "Expiring Soon";
                     statusColor =
                       "bg-orange-100 text-orange-800 border-orange-300";
                   }
