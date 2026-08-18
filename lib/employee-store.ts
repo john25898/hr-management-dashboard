@@ -87,7 +87,16 @@ export function getModifications(): HRModifications {
     };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const mods = JSON.parse(raw);
+      // Normalize older stored shapes that may be missing newer keys
+      return {
+        employeeEdits: mods.employeeEdits || {},
+        disabilities: mods.disabilities || [],
+        transfers: mods.transfers || [],
+        newWorkers: mods.newWorkers || [],
+      };
+    }
   } catch {}
   return { employeeEdits: {}, disabilities: [], transfers: [], newWorkers: [] };
 }

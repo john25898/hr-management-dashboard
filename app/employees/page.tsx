@@ -17,6 +17,7 @@ import { BackButton } from "@/components/back-button";
 import { EmployeeEditModal } from "@/components/employee-edit-modal";
 import { Button } from "@/components/ui/button";
 import { NewWorkerModal } from "@/components/new-worker-modal";
+import { getNewWorkers } from "@/lib/employee-store";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -104,6 +105,72 @@ export default function EmployeesPage() {
 
   const isLoading = employeesLoading || analyticsLoading;
 
+  // Merge workers added via "Add New Worker" (stored in localStorage) into the
+  // directory list. The API is server-side and can't see localStorage, so we
+  // combine here and re-run on refreshKey/filter changes.
+  const mergedEmployees = React.useMemo(() => {
+    const apiEmps = employeeData?.data || [];
+    const q = (filters.search || "").toLowerCase().trim();
+
+    const workers = getNewWorkers()
+      .map((w) => ({
+        id: w.id,
+        name: w.name,
+        gender: w.gender || undefined,
+        designation:
+          w.designation || w.designationGroup || w.designationOriginal || "",
+        county: w.county,
+        subCounty: w.subCounty,
+        station: w.facility || w.subCounty || "",
+        validUntil: w.validUntil || undefined,
+        contractEnd: w.contractEnd || undefined,
+        phone: w.phone,
+        idNo: w.idNo,
+        educationLevel: w.educationLevel || undefined,
+        qualification: w.qualification || undefined,
+        regulatoryBody: w.regulatoryBody || undefined,
+        practiseeLicence: w.licenceNo || undefined,
+        dateEmployed: w.dateEmployed,
+        dob: w.dob || undefined,
+        isDeparted: false,
+      }))
+      .filter((w: any) => {
+        if (filters.county !== "all" && w.county !== filters.county)
+          return false;
+        if (
+          filters.designation !== "all" &&
+          w.designation !== filters.designation
+        )
+          return false;
+        if (filters.gender !== "all" && w.gender !== filters.gender)
+          return false;
+        if (q) {
+          const haystack = [
+            w.name,
+            w.phone,
+            w.idNo,
+            w.designation,
+            w.county,
+            w.station,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      });
+
+    return [...apiEmps, ...workers];
+  }, [
+    employeeData?.data,
+    refreshKey,
+    filters.search,
+    filters.county,
+    filters.designation,
+    filters.gender,
+  ]);
+
   return (
     <>
       <div className="space-y-6 p-4 md:p-6">
@@ -143,8 +210,9 @@ export default function EmployeesPage() {
               <div>
                 <CardTitle>Employees</CardTitle>
                 <CardDescription>
-                  {employeeData?.total || 0}{" "}
-                  {employeeData?.total === 1 ? "employee" : "employees"} found
+                  {mergedEmployees.length}{" "}
+                  {mergedEmployees.length === 1 ? "employee" : "employees"}{" "}
+                  found
                 </CardDescription>
               </div>
             </div>
@@ -156,7 +224,8 @@ export default function EmployeesPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
-            ) : employeeData?.data?.length === 0 ? (
+            ) : employeeData?.data?.length === 0 &&
+              mergedEmployees.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-muted/30 py-12">
                 <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
                 <p className="text-sm font-medium text-muted-foreground">
@@ -168,7 +237,7 @@ export default function EmployeesPage() {
               </div>
             ) : (
               <EmployeesTable
-                employees={employeeData?.data || []}
+                employees={mergedEmployees}
                 onEmployeeClick={(emp) => {
                   setSelectedEmployee(emp);
                   setEditModalOpen(true);

@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { X, ChevronDown, Filter } from 'lucide-react';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { X, ChevronDown, Filter } from "lucide-react";
 
 interface FilterOptions {
   counties?: string[];
@@ -40,42 +40,63 @@ interface UnifiedFiltersProps {
   isLoading?: boolean;
 }
 
-export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFiltersProps) {
+export function UnifiedFilters({
+  options,
+  onFilterChange,
+  isLoading,
+}: UnifiedFiltersProps) {
   const [filters, setFilters] = React.useState<FilterState>({
-    search: '',
-    county: 'all',
-    designation: 'all',
-    gender: 'all',
-    status: 'all',
-    education: 'all',
-    regulatoryBody: 'all',
+    search: "",
+    county: "all",
+    designation: "all",
+    gender: "all",
+    status: "all",
+    education: "all",
+    regulatoryBody: "all",
   });
 
   const [expanded, setExpanded] = React.useState(true);
   const [activeCount, setActiveCount] = React.useState(0);
+  const searchDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  React.useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, []);
 
   const handleFilterChange = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    
+
     // Count active filters (non-'all' and non-empty)
     const count = Object.values(newFilters).filter(
-      v => v && v !== 'all' && v.trim() !== ''
+      (v) => v && v !== "all" && v.trim() !== "",
     ).length;
     setActiveCount(count);
-    
-    onFilterChange(newFilters);
+
+    if (key === "search") {
+      // Debounce search so the input never loses focus mid-typing
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = setTimeout(() => {
+        onFilterChange(newFilters);
+      }, 350);
+    } else {
+      onFilterChange(newFilters);
+    }
   };
 
   const handleReset = () => {
     const resetFilters: FilterState = {
-      search: '',
-      county: 'all',
-      designation: 'all',
-      gender: 'all',
-      status: 'all',
-      education: 'all',
-      regulatoryBody: 'all',
+      search: "",
+      county: "all",
+      designation: "all",
+      gender: "all",
+      status: "all",
+      education: "all",
+      regulatoryBody: "all",
     };
     setFilters(resetFilters);
     setActiveCount(0);
@@ -113,7 +134,9 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
             onClick={() => setExpanded(!expanded)}
             className="h-7 w-7 p-0"
           >
-            <ChevronDown className={`h-4 w-4 transition-transform ${!expanded ? '-rotate-90' : ''}`} />
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${!expanded ? "-rotate-90" : ""}`}
+            />
           </Button>
         </div>
       </div>
@@ -123,12 +146,13 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
         <div className="space-y-3 rounded-lg bg-card border border-border p-4">
           {/* Search */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">Search</label>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">
+              Search
+            </label>
             <Input
               placeholder="Name, phone, ID, or email..."
-              value={filters.search || ''}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              disabled={isLoading}
+              value={filters.search || ""}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
               className="h-8 text-sm"
             />
           </div>
@@ -138,17 +162,21 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
             {/* County */}
             {options.counties && options.counties.length > 0 && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">County</label>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                  County
+                </label>
                 <Select
-                  value={filters.county || 'all'}
-                  onValueChange={(value) => handleFilterChange('county', value)}
+                  value={filters.county || "all"}
+                  onValueChange={(value) => handleFilterChange("county", value)}
                   disabled={isLoading}
                 >
                   <SelectTrigger className="h-8 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Counties ({options.counties.length})</SelectItem>
+                    <SelectItem value="all">
+                      All Counties ({options.counties.length})
+                    </SelectItem>
                     {options.counties.map((county) => (
                       <SelectItem key={county} value={county}>
                         {county}
@@ -162,10 +190,12 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
             {/* Gender */}
             {options.genders && options.genders.length > 0 && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">Gender</label>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                  Gender
+                </label>
                 <Select
-                  value={filters.gender || 'all'}
-                  onValueChange={(value) => handleFilterChange('gender', value)}
+                  value={filters.gender || "all"}
+                  onValueChange={(value) => handleFilterChange("gender", value)}
                   disabled={isLoading}
                 >
                   <SelectTrigger className="h-8 text-sm">
@@ -186,17 +216,23 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
             {/* Designation */}
             {options.designations && options.designations.length > 0 && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">Designation</label>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                  Designation
+                </label>
                 <Select
-                  value={filters.designation || 'all'}
-                  onValueChange={(value) => handleFilterChange('designation', value)}
+                  value={filters.designation || "all"}
+                  onValueChange={(value) =>
+                    handleFilterChange("designation", value)
+                  }
                   disabled={isLoading}
                 >
                   <SelectTrigger className="h-8 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Designations ({options.designations.length})</SelectItem>
+                    <SelectItem value="all">
+                      All Designations ({options.designations.length})
+                    </SelectItem>
                     {options.designations.map((designation) => (
                       <SelectItem key={designation} value={designation}>
                         {designation}
@@ -210,10 +246,12 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
             {/* Status */}
             {options.statuses && options.statuses.length > 0 && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">License Status</label>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                  License Status
+                </label>
                 <Select
-                  value={filters.status || 'all'}
-                  onValueChange={(value) => handleFilterChange('status', value)}
+                  value={filters.status || "all"}
+                  onValueChange={(value) => handleFilterChange("status", value)}
                   disabled={isLoading}
                 >
                   <SelectTrigger className="h-8 text-sm">
@@ -234,10 +272,14 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
             {/* Education Level */}
             {options.educationLevels && options.educationLevels.length > 0 && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">Education</label>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                  Education
+                </label>
                 <Select
-                  value={filters.education || 'all'}
-                  onValueChange={(value) => handleFilterChange('education', value)}
+                  value={filters.education || "all"}
+                  onValueChange={(value) =>
+                    handleFilterChange("education", value)
+                  }
                   disabled={isLoading}
                 >
                   <SelectTrigger className="h-8 text-sm">
@@ -256,28 +298,33 @@ export function UnifiedFilters({ options, onFilterChange, isLoading }: UnifiedFi
             )}
 
             {/* Regulatory Body */}
-            {options.regulatoryBodies && options.regulatoryBodies.length > 0 && (
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">Regulatory Body</label>
-                <Select
-                  value={filters.regulatoryBody || 'all'}
-                  onValueChange={(value) => handleFilterChange('regulatoryBody', value)}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Bodies</SelectItem>
-                    {options.regulatoryBodies.map((body) => (
-                      <SelectItem key={body} value={body}>
-                        {body}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {options.regulatoryBodies &&
+              options.regulatoryBodies.length > 0 && (
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                    Regulatory Body
+                  </label>
+                  <Select
+                    value={filters.regulatoryBody || "all"}
+                    onValueChange={(value) =>
+                      handleFilterChange("regulatoryBody", value)
+                    }
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Bodies</SelectItem>
+                      {options.regulatoryBodies.map((body) => (
+                        <SelectItem key={body} value={body}>
+                          {body}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
           </div>
         </div>
       )}
