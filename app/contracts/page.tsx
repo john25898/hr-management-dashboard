@@ -72,8 +72,9 @@ export default function ContractsPage() {
       return { expired: 0, expiring: 0, valid: 0, noData: 0, total: 0 };
 
     const now = new Date();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000,
+    const expiringWindowDays = 90;
+    const expiringCutoff = new Date(
+      now.getTime() + expiringWindowDays * 24 * 60 * 60 * 1000,
     );
 
     let expired = 0,
@@ -88,7 +89,7 @@ export default function ContractsPage() {
       }
       const expireDate = new Date(emp.contractEnd);
       if (expireDate < now) expired++;
-      else if (expireDate <= thirtyDaysFromNow) expiring++;
+      else if (expireDate <= expiringCutoff) expiring++;
       else valid++;
     });
 
@@ -127,8 +128,8 @@ export default function ContractsPage() {
     > = {};
 
     const now = new Date();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000,
+    const expiringCutoff = new Date(
+      now.getTime() + 90 * 24 * 60 * 60 * 1000,
     );
 
     employees.data.forEach((emp: any) => {
@@ -139,7 +140,7 @@ export default function ContractsPage() {
       if (!emp.contractEnd) return;
       const expireDate = new Date(emp.contractEnd);
       if (expireDate < now) countyMap[county].expired++;
-      else if (expireDate <= thirtyDaysFromNow) countyMap[county].expiring++;
+      else if (expireDate <= expiringCutoff) countyMap[county].expiring++;
       else countyMap[county].valid++;
     });
 
@@ -158,8 +159,8 @@ export default function ContractsPage() {
     if (!employees?.data) return [];
 
     const now = new Date();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000,
+    const expiringCutoff = new Date(
+      now.getTime() + 90 * 24 * 60 * 60 * 1000,
     );
 
     return employees.data.filter((emp: any) => {
@@ -180,10 +181,10 @@ export default function ContractsPage() {
       if (contractFilter === "expiring") {
         if (!emp.contractEnd) return false;
         const d = new Date(emp.contractEnd);
-        return d >= now && d <= thirtyDaysFromNow;
+        return d >= now && d <= expiringCutoff;
       }
       if (contractFilter === "valid")
-        return emp.contractEnd && new Date(emp.contractEnd) > thirtyDaysFromNow;
+        return emp.contractEnd && new Date(emp.contractEnd) > expiringCutoff;
       if (contractFilter === "no-date") return !emp.contractEnd;
 
       return true;
@@ -253,7 +254,9 @@ export default function ContractsPage() {
             <div className="text-2xl font-bold text-orange-600">
               {contractStats.expiring}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">within 30 days</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              within 90 days
+            </p>
           </CardContent>
         </Card>
 
@@ -509,8 +512,8 @@ export default function ContractsPage() {
                     ? new Date(emp.contractEnd)
                     : null;
                   const now = new Date();
-                  const thirtyDaysFromNow = new Date(
-                    now.getTime() + 30 * 24 * 60 * 60 * 1000,
+                  const expiringCutoff = new Date(
+                    now.getTime() + 90 * 24 * 60 * 60 * 1000,
                   );
 
                   let status = "Valid";
@@ -523,7 +526,7 @@ export default function ContractsPage() {
                   } else if (expireDate < now) {
                     status = "Expired";
                     statusColor = "bg-red-100 text-red-800 border-red-300";
-                  } else if (expireDate <= thirtyDaysFromNow) {
+                  } else if (expireDate <= expiringCutoff) {
                     status = "Expiring Soon";
                     statusColor =
                       "bg-orange-100 text-orange-800 border-orange-300";

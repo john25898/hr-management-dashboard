@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { LoginPage } from "@/components/login-page";
+import { NotificationsBell } from "@/components/notifications-bell";
 import {
   loadSession,
   saveSession,
@@ -64,6 +65,10 @@ export function AuthGate({ children }: AuthGateProps) {
 
   return (
     <AuthContext.Provider value={{ user, logout: handleLogout }}>
+      {/* Global notification bell — visible on every page while signed in */}
+      <div className="fixed top-4 right-4 z-50">
+        <NotificationsBell />
+      </div>
       {children}
     </AuthContext.Provider>
   );

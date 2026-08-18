@@ -153,27 +153,34 @@ export default function DepartedPage() {
 
   const now = new Date();
 
-  // Employees departed via modal exit reasons
+  // Employees departed via modal exit reasons (or confirmed from notifications)
   const exitedEmployees = React.useMemo(() => {
     if (!storeMods?.employeeEdits) return [];
+    const dataList: any[] = employees?.data || [];
     return Object.entries(storeMods.employeeEdits)
       .filter(([_, edit]: [string, any]) => edit.isDeparted && edit.exitReason)
-      .map(([name, edit]: [string, any]) => ({
-        name,
-        designation: "",
-        county: "",
-        exitReason: edit.exitReason,
-        exitDate: edit.exitDate,
-        daysAgo: edit.exitDate
-          ? Math.floor(
-              (now.getTime() - new Date(edit.exitDate).getTime()) /
-                (1000 * 60 * 60 * 24),
-            )
-          : 0,
-      }));
-  }, [storeMods, now]);
+      .map(([name, edit]: [string, any]) => {
+        const emp = dataList.find((e: any) => e.name === name);
+        return {
+          name,
+          designation: emp?.designation || "",
+          county: emp?.county || "",
+          exitReason: edit.exitReason,
+          exitDate: edit.exitDate,
+          daysAgo: edit.exitDate
+            ? Math.floor(
+                (now.getTime() - new Date(edit.exitDate).getTime()) /
+                  (1000 * 60 * 60 * 24),
+              )
+            : 0,
+        };
+      });
+  }, [storeMods, employees?.data, now]);
 
-  // Employees with expired license or past endOfContract
+  // Employees recorded as departed in the source data, or confirmed by HR.
+  // Contract-expired staff are NEVER auto-departed — HR must confirm first
+  // (via the notification bell or the employee edit modal), which writes an
+  // `isDeparted` edit into the modifications store.
   const expiredEmployees = React.useMemo(() => {
     if (!employees?.data) return [];
 
@@ -182,9 +189,12 @@ export default function DepartedPage() {
         // Skip if this employee was exited via modal (already in exitedEmployees)
         if (storeMods?.employeeEdits?.[emp.name]?.isDeparted) return false;
 
-        // Check if endOfContract was set and is in the past. Contract end
-        // (employment) is the source of truth for departure — not the
-        // practising-licence expiry, which can pass while the person is
+        // Only show staff who are departed in the source data. Anyone whose
+        // contract merely expired stays active until HR confirms departure.
+        if (!emp.isDeparted) return false;
+
+        // Contract end (employment) is the source of truth for departure — not
+        // the practising-licence expiry, which can pass while the person is
         // still employed.
         const storedEdit = storeMods?.employeeEdits?.[emp.name];
         const contractDate =
