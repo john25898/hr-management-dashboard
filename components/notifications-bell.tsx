@@ -6,10 +6,7 @@ import Link from "next/link";
 import { Bell, CheckCircle2, FileText, ShieldAlert, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  getModifications,
-  updateEmployeeEdit,
-} from "@/lib/employee-store";
+import { getModifications, updateEmployeeEdit } from "@/lib/employee-store";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -33,7 +30,7 @@ function formatDate(d: string | undefined) {
  *  - Contracts that have EXPIRED (staff still active — HR must confirm &
  *    move them to departed; they are never auto-departed)
  *  - Licences that have expired
- *  - Contracts expiring within 90 days (heads-up)
+ *  - Contracts expiring within 20 days (heads-up)
  */
 export function NotificationsBell({ compact = false }: { compact?: boolean }) {
   const { data: employees } = useSWR(
@@ -61,7 +58,7 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
   }, []);
 
   const now = new Date();
-  const cutoff90 = new Date(now.getTime() + 90 * DAY);
+  const cutoff20 = new Date(now.getTime() + 20 * DAY);
 
   const emps = React.useMemo(() => employees?.data || [], [employees]);
 
@@ -99,7 +96,7 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
     [emps, isConfirmedDeparted, now],
   );
 
-  // Contracts expiring within 90 days (heads-up only)
+  // Contracts expiring within 20 days (heads-up only)
   const expiringContracts = React.useMemo(
     () =>
       emps.filter(
@@ -108,9 +105,9 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
           !isConfirmedDeparted(e.name) &&
           e.contractEnd &&
           new Date(e.contractEnd) >= now &&
-          new Date(e.contractEnd) <= cutoff90,
+          new Date(e.contractEnd) <= cutoff20,
       ),
-    [emps, isConfirmedDeparted, now, cutoff90],
+    [emps, isConfirmedDeparted, now, cutoff20],
   );
 
   const actionCount = expiredContracts.length + expiredLicenses.length;
@@ -251,7 +248,7 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
                 <p className="px-3 py-1 text-xs font-semibold text-orange-600 flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
                   {expiringContracts.length} contract
-                  {expiringContracts.length > 1 ? "s" : ""} expiring within 90
+                  {expiringContracts.length > 1 ? "s" : ""} expiring within 20
                   days
                 </p>
                 <div className="px-3 pb-2">

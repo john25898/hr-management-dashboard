@@ -72,7 +72,7 @@ export default function ContractsPage() {
       return { expired: 0, expiring: 0, valid: 0, noData: 0, total: 0 };
 
     const now = new Date();
-    const expiringWindowDays = 90;
+    const expiringWindowDays = 20;
     const expiringCutoff = new Date(
       now.getTime() + expiringWindowDays * 24 * 60 * 60 * 1000,
     );
@@ -128,9 +128,7 @@ export default function ContractsPage() {
     > = {};
 
     const now = new Date();
-    const expiringCutoff = new Date(
-      now.getTime() + 90 * 24 * 60 * 60 * 1000,
-    );
+    const expiringCutoff = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000);
 
     employees.data.forEach((emp: any) => {
       const county = emp.county || "Unknown";
@@ -159,9 +157,7 @@ export default function ContractsPage() {
     if (!employees?.data) return [];
 
     const now = new Date();
-    const expiringCutoff = new Date(
-      now.getTime() + 90 * 24 * 60 * 60 * 1000,
-    );
+    const expiringCutoff = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000);
 
     return employees.data.filter((emp: any) => {
       const searchLower = searchTerm.toLowerCase();
@@ -184,7 +180,7 @@ export default function ContractsPage() {
         return d >= now && d <= expiringCutoff;
       }
       if (contractFilter === "valid")
-        return emp.contractEnd && new Date(emp.contractEnd) > expiringCutoff;
+        return emp.contractEnd && new Date(emp.contractEnd) >= now;
       if (contractFilter === "no-date") return !emp.contractEnd;
 
       return true;
@@ -237,7 +233,7 @@ export default function ContractsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {contractStats.valid}
+              {contractStats.valid + contractStats.expiring}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               active contracts
@@ -254,9 +250,7 @@ export default function ContractsPage() {
             <div className="text-2xl font-bold text-orange-600">
               {contractStats.expiring}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              within 90 days
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">within 20 days</p>
           </CardContent>
         </Card>
 
@@ -513,7 +507,7 @@ export default function ContractsPage() {
                     : null;
                   const now = new Date();
                   const expiringCutoff = new Date(
-                    now.getTime() + 90 * 24 * 60 * 60 * 1000,
+                    now.getTime() + 20 * 24 * 60 * 60 * 1000,
                   );
 
                   let status = "Valid";
