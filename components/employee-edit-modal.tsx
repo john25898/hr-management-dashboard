@@ -107,7 +107,7 @@ export function EmployeeEditModal({
       setEndOfContract(
         edit?.endOfContract
           ? toInputDate(edit.endOfContract)
-          : toInputDate(employee.validUntil),
+          : toInputDate(employee.contractEnd),
       );
       setSelectedReason("");
       setConfirmExit(false);
@@ -153,10 +153,20 @@ export function EmployeeEditModal({
     return "bg-green-100 text-green-800";
   };
 
-  const daysUntilExpiry = (() => {
-    const date = endOfContract || employee.validUntil;
+  // Days until the CONTRACT ends (contract date, not license date)
+  const daysUntilContractEnd = (() => {
+    const date = endOfContract || employee.contractEnd;
     if (!date) return null;
     const d = new Date(date);
+    return Math.floor(
+      (d.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+    );
+  })();
+
+  // Days until the LICENSE expires (license date only)
+  const licenseDaysLeft = (() => {
+    if (!employee.validUntil) return null;
+    const d = new Date(employee.validUntil);
     return Math.floor(
       (d.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
     );
@@ -288,10 +298,10 @@ export function EmployeeEditModal({
               </div>
             )}
 
-            {/* End of Contract / Valid Until */}
+            {/* End of Contract — separate from license */}
             <div>
               <p className="text-xs text-muted-foreground mb-2">
-                End of Contract / License Valid Until
+                End of Contract
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[200px]">
@@ -303,17 +313,17 @@ export function EmployeeEditModal({
                     className="pl-8"
                   />
                 </div>
-                {daysUntilExpiry !== null && (
+                {daysUntilContractEnd !== null && (
                   <Badge
                     className={getLicenseStatusColor(
-                      endOfContract || employee.validUntil,
+                      endOfContract || employee.contractEnd,
                     )}
                   >
-                    {daysUntilExpiry < 0
-                      ? `Expired ${Math.abs(daysUntilExpiry)}d ago`
-                      : daysUntilExpiry < 30
-                        ? `Expires in ${daysUntilExpiry}d`
-                        : `${daysUntilExpiry}d remaining`}
+                    {daysUntilContractEnd < 0
+                      ? `Expired ${Math.abs(daysUntilContractEnd)}d ago`
+                      : daysUntilContractEnd < 30
+                        ? `Expires in ${daysUntilContractEnd}d`
+                        : `${daysUntilContractEnd}d remaining`}
                   </Badge>
                 )}
               </div>
@@ -327,7 +337,7 @@ export function EmployeeEditModal({
                 </Button>
                 {existingEdit?.endOfContract &&
                   existingEdit.endOfContract !==
-                    toInputDate(employee.validUntil) && (
+                    toInputDate(employee.contractEnd) && (
                     <p className="text-xs text-muted-foreground">
                       Previously edited:{" "}
                       {formatDate(existingEdit.endOfContract)}
@@ -335,6 +345,28 @@ export function EmployeeEditModal({
                   )}
               </div>
             </div>
+
+            {/* License Valid Until — its own line, never mixed with contract */}
+            {employee.validUntil && (
+              <div className="flex items-center justify-between border-t border-border pt-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    License Valid Until
+                  </p>
+                  <p className="font-medium text-sm">
+                    {formatDate(employee.validUntil)}
+                  </p>
+                </div>
+                <Badge className={getLicenseStatusColor(employee.validUntil)}>
+                  {licenseDaysLeft !== null &&
+                    (licenseDaysLeft < 0
+                      ? `Expired ${Math.abs(licenseDaysLeft)}d ago`
+                      : licenseDaysLeft < 30
+                        ? `Expires in ${licenseDaysLeft}d`
+                        : `${licenseDaysLeft}d remaining`)}
+                </Badge>
+              </div>
+            )}
           </div>
 
           {/* Transfer Button */}

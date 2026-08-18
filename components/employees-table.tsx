@@ -98,9 +98,10 @@ export function EmployeesTable({
             const edit = employee.name
               ? getEmployeeEdit(employee.name)
               : undefined;
-            // Show edited endOfContract if available, otherwise fall back to validUntil from Excel
+            // Show edited endOfContract if available, otherwise the source contract end.
+            // NOTE: never fall back to validUntil (license date) — those are different concepts.
             const contractEnd =
-              edit?.endOfContract || employee.validUntil || null;
+              edit?.endOfContract || employee.contractEnd || null;
 
             return (
               <TableRow
