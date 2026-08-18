@@ -49,7 +49,8 @@ function addDays(iso: string, days: number): string {
 // Convert a raw cm-a-t LeaveRequest (or dashboard entry) into the dashboard's
 // leave entry shape used by balances / calendar / KPIs.
 export function convertCmatEntry(raw: any): any {
-  const leaveType = CMAT_TYPE_MAP[raw.leaveType] || raw.leaveType || "Other Leave";
+  const leaveType =
+    CMAT_TYPE_MAP[raw.leaveType] || raw.leaveType || "Other Leave";
   const days = raw.leaveDays || raw.days || 1;
   const startDate = (raw.startDate || "").slice(0, 10);
   const reportingDate = (raw.reportingDate || raw.endDate || "").slice(0, 10);
@@ -89,10 +90,12 @@ export function LeaveSyncPanel({ onImport }: LeaveSyncPanelProps) {
   const [importedCount, setImportedCount] = React.useState(0);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
-  // Auto-sync from the shared backend on mount — leave entered in the CMaT
-  // app appears here automatically, no manual steps needed.
+  // Auto-sync from the shared backend on mount AND every 30s — leave entered
+  // in the CMaT app appears here automatically, no manual steps needed.
   React.useEffect(() => {
     pullFromBackend();
+    const interval = setInterval(pullFromBackend, 30000);
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -123,7 +126,9 @@ export function LeaveSyncPanel({ onImport }: LeaveSyncPanelProps) {
         return;
       }
       const parsed = JSON.parse(raw);
-      const entries = (Array.isArray(parsed) ? parsed : []).map(convertCmatEntry);
+      const entries = (Array.isArray(parsed) ? parsed : []).map(
+        convertCmatEntry,
+      );
       setDetected(entries);
     } catch {
       setDetected([]);
@@ -145,11 +150,15 @@ export function LeaveSyncPanel({ onImport }: LeaveSyncPanelProps) {
       try {
         const parsed = JSON.parse(String(reader.result));
         const arr = Array.isArray(parsed) ? parsed : [parsed];
-        const entries = arr.map(convertCmatEntry).filter((x: any) => x.startDate);
+        const entries = arr
+          .map(convertCmatEntry)
+          .filter((x: any) => x.startDate);
         onImport(entries);
         setImportedCount((c) => c + entries.length);
       } catch {
-        alert("Could not parse JSON file — expected an array of leave requests.");
+        alert(
+          "Could not parse JSON file — expected an array of leave requests.",
+        );
       }
     };
     reader.readAsText(file);
@@ -225,7 +234,11 @@ export function LeaveSyncPanel({ onImport }: LeaveSyncPanelProps) {
           <Button variant="outline" size="sm" onClick={detectFromLocalStorage}>
             <Upload className="mr-2 h-4 w-4" /> Detect Local Storage
           </Button>
-          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+          >
             <Download className="mr-2 h-4 w-4" /> Import JSON
           </Button>
           <Button variant="outline" size="sm" onClick={exportTemplate}>
@@ -244,8 +257,8 @@ export function LeaveSyncPanel({ onImport }: LeaveSyncPanelProps) {
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
             <strong>Backend table not created yet.</strong> Run the{" "}
             <code>leave_requests</code> section of{" "}
-            <code>cm-a-t-enterprise-web-app/supabase-migration.sql</code> in
-            the Supabase SQL Editor (project <code>aarqmoujwdhpfdlylyzp</code>
+            <code>cm-a-t-enterprise-web-app/supabase-migration.sql</code> in the
+            Supabase SQL Editor (project <code>aarqmoujwdhpfdlylyzp</code>
             ), then click Sync Now.
           </div>
         )}
@@ -281,17 +294,18 @@ export function LeaveSyncPanel({ onImport }: LeaveSyncPanelProps) {
 
         {importedCount > 0 && (
           <div className="mt-2 text-xs text-muted-foreground">
-            {importedCount} manually imported entr{importedCount === 1 ? "y" : "ies"}
+            {importedCount} manually imported entr
+            {importedCount === 1 ? "y" : "ies"}
           </div>
         )}
 
         <p className="mt-4 text-xs text-muted-foreground">
           <ExternalLink className="mr-1 inline h-3 w-3" />
           How it works: staff enter leave in the CMaT app →{" "}
-          <code>saveAllLeaves</code> upserts to Supabase <code>leave_requests</code>{" "}
-          → this dashboard pulls on load / Sync Now. Approvals and new entries
-          made here are pushed back to the same table, so both apps always
-          agree. localStorage remains an offline fallback.
+          <code>saveAllLeaves</code> upserts to Supabase{" "}
+          <code>leave_requests</code> → this dashboard pulls on load / Sync Now.
+          Approvals and new entries made here are pushed back to the same table,
+          so both apps always agree. localStorage remains an offline fallback.
         </p>
       </CardContent>
     </Card>

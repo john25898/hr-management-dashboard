@@ -22,6 +22,7 @@ import {
   DollarSign,
   Clock,
   CalendarDays,
+  FileSpreadsheet,
   LogOut,
   UserCircle2,
 } from "lucide-react";
@@ -45,6 +46,7 @@ const navItems = [
   { href: "/experience", label: "Experience", icon: Clock },
   { href: "/contracts", label: "Contracts", icon: FileText },
   { href: "/leave", label: "Leave", icon: CalendarDays },
+  { href: "/timesheets", label: "Timesheets", icon: FileSpreadsheet },
   { href: "/payroll", label: "Payroll", icon: DollarSign },
   { href: "/layworkers", label: "Layworkers", icon: Users2 },
 ];

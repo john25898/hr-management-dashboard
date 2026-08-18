@@ -25,6 +25,7 @@ import {
   Sun,
   Download,
   Users,
+  Plus,
 } from "lucide-react";
 import {
   Table,
@@ -72,6 +73,22 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: "bg-gray-100 text-gray-600 border-gray-300",
 };
 
+// Inclusive count of weekdays between two YYYY-MM-DD dates (same rule as the
+// HRH tracker: weekends don't count as leave days).
+const countWorkdays = (start: string, end: string): number => {
+  const s = new Date(`${start}T00:00:00`);
+  const e = new Date(`${end}T00:00:00`);
+  if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
+  let days = 0;
+  const cur = new Date(s);
+  while (cur <= e) {
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) days++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return days;
+};
+
 export default function LeavePage() {
   const { data, isLoading } = useSWR("/api/leave", fetcher);
   // Central HR roster (181 active employees — the same people as the CMaT logins)
@@ -95,9 +112,16 @@ export default function LeavePage() {
     const add = (name: string, extra: any = {}) => {
       if (!name) return;
       const key = name.trim().toLowerCase();
-      if (!seen.has(key)) {
-        seen.set(key, { name: name.trim(), ...extra });
+      const existing = seen.get(key);
+      if (existing) {
+        // Enrich with any new info — e.g. the CMaT synced roster carries
+        // real emails/facilities that the master DB rows may lack.
+        for (const [k, v] of Object.entries(extra)) {
+          if (v && !existing[k]) existing[k] = v;
+        }
+        return;
       }
+      seen.set(key, { name: name.trim(), ...extra });
     };
     const trackerStaff: any[] = (trackerData as any).staff || [];
     if (rosterEmployees.length > 0) {
@@ -166,6 +190,19 @@ export default function LeavePage() {
   // Entries synced from the CMaT Enterprise app
   const [cmatEntries, setCmatEntries] = React.useState<any[]>([]);
 
+  // Live approved leave days from CMaT sync + manual HR additions. These are
+  // NOT in the static workbook, so they must be subtracted from each staff
+  // member's remaining balance (used + remaining recalc automatically).
+  const liveUsedByStaffType = React.useMemo(() => {
+    const map = new Map<string, number>();
+    cmatEntries.forEach((l: any) => {
+      if (l.status !== "Approved") return;
+      const key = `${l.employee}|${l.leaveType}`;
+      map.set(key, (map.get(key) || 0) + (l.days || 0));
+    });
+    return map;
+  }, [cmatEntries]);
+
   // Unified leave log: HRH tracker records + Excel planner + CMaT sync.
   // Deduped by id (last wins) so an entry that lives in both local storage and
   // the shared backend isn't double-counted, and CMaT approval status wins.
@@ -177,6 +214,27 @@ export default function LeavePage() {
     }
     return Array.from(seen.values());
   }, [excelLog, trackerLog, cmatEntries]);
+
+  // Live CMaT-synced leave, mapped into the HRH tracker record shape so the
+  // tracker's "Leave Records" tab shows new requests / status updates from the
+  // CMaT app as they happen (deduped inside the tracker by id/composite key).
+  const trackerExternalRecords = React.useMemo(() => {
+    return leaveLog
+      .filter((l: any) => l.startDate)
+      .map((l: any) => ({
+        id: l.id,
+        name: l.employee,
+        county: l.county || "",
+        cadre: l.cadre || "",
+        leaveType: l.leaveType,
+        startDate: l.startDate,
+        endDate: l.endDate,
+        days: l.days,
+        status: l.status,
+        source:
+          l.source || (l.id && String(l.id).startsWith("ts_") ? "CMaT" : ""),
+      }));
+  }, [leaveLog]);
 
   // ── Filters ──
   const [employeeFilter, setEmployeeFilter] = React.useState("all");
@@ -238,10 +296,14 @@ export default function LeavePage() {
       (sum: number, u: any) => sum + (u.annual?.entitlement || 0),
       0,
     );
-    const totalBalance = trackerUtil.reduce(
-      (sum: number, u: any) => sum + (u.annual?.remaining || 0),
-      0,
-    );
+    const totalBalance =
+      trackerUtil.reduce(
+        (sum: number, u: any) => sum + (u.annual?.remaining || 0),
+        0,
+      ) -
+      Array.from(liveUsedByStaffType.entries())
+        .filter(([k]) => k.endsWith("|Annual Leave"))
+        .reduce((s: number, [, v]) => s + v, 0);
     const onLeaveNames = onLeaveNow.map((l: any) => l.employee);
     // Approved leave overlapping the current calendar month
     const [curY, curM] = todayISO.split("-").map(Number);
@@ -272,7 +334,14 @@ export default function LeavePage() {
       ],
       monthLabel: MONTH_NAMES[curM - 1],
     };
-  }, [leaveLog, employees, balances, todayISO, trackerUtil]);
+  }, [
+    leaveLog,
+    employees,
+    balances,
+    todayISO,
+    trackerUtil,
+    liveUsedByStaffType,
+  ]);
 
   // ── Charts data ──
   const typeDistribution = React.useMemo(() => {
@@ -414,12 +483,109 @@ export default function LeavePage() {
   }, [employees, leaveLog, selectedMonth, holidays]);
 
   // ── Handlers ──
+  // Backend (latest) wins by id — so a leave approved/returned in the CMaT
+  // app updates its status here on the next auto-sync instead of being
+  // skipped as a duplicate. New ids are appended.
   const handleSyncImport = (entries: any[]) => {
     setCmatEntries((prev) => {
-      const existingIds = new Set(prev.map((p: any) => p.id));
-      const fresh = entries.filter((e: any) => !existingIds.has(e.id));
-      return [...prev, ...fresh];
+      const byId = new Map(prev.map((p: any) => [String(p.id), p]));
+      entries.forEach((e: any) => {
+        if (e && e.id != null) byId.set(String(e.id), e);
+      });
+      return Array.from(byId.values());
     });
+  };
+
+  // ── Quick Add Leave (manual HR entry) ──────────────────────────────────
+  const [addStaff, setAddStaff] = React.useState("");
+  const [addType, setAddType] = React.useState("Annual Leave");
+  const [addStart, setAddStart] = React.useState("");
+  const [addEnd, setAddEnd] = React.useState("");
+  const [addDays, setAddDays] = React.useState(0);
+  const [addDaysTouched, setAddDaysTouched] = React.useState(false);
+  const [addStatus, setAddStatus] = React.useState("Approved");
+  const [addAdded, setAddAdded] = React.useState(false);
+
+  // Auto-compute days from the date range (working days only) until the user
+  // overrides the Days field manually.
+  React.useEffect(() => {
+    if (addStart && addEnd && !addDaysTouched) {
+      setAddDays(countWorkdays(addStart, addEnd));
+    }
+  }, [addStart, addEnd, addDaysTouched]);
+
+  const addValid = !!(addStaff && addStart && addEnd && addDays > 0);
+
+  // Core: add a manual leave entry to the unified log AND push it to the
+  // shared backend so the CMaT app sees it too (two-way sync). Used by both
+  // the Quick Add form here and the tracker's staff modal (onManualAdd).
+  const addManualEntry = async (entry: any) => {
+    const e = {
+      ...entry,
+      id: entry.id || `manual-${Date.now()}`,
+      source: "Manual",
+    };
+    // Local update first — leave log, balances, KPIs, calendar & Records tab
+    // all react immediately because they derive from `leaveLog`.
+    setCmatEntries((prev) => [...prev, e]);
+    try {
+      const staff =
+        employees.find((em: any) => em.name === e.employee) ||
+        syncedStaff.find(
+          (s: any) =>
+            s.name === e.employee ||
+            s.staffName === e.employee ||
+            s.email === e.employee,
+        );
+      await fetch("/api/leave-sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entries: [
+            {
+              id: e.id,
+              staffEmail: staff?.email || "",
+              staffName: e.employee,
+              facility: staff?.facility || "",
+              leaveType: e.leaveType,
+              leaveDays: e.days,
+              days: e.days,
+              startDate: e.startDate,
+              endDate: e.endDate,
+              reportingDate: e.endDate,
+              status: (e.status || "approved").toLowerCase(),
+            },
+          ],
+        }),
+      });
+    } catch {
+      // Offline / backend unavailable — local entry still works.
+    }
+  };
+
+  const handleAddLeave = async () => {
+    if (!addValid) return;
+    await addManualEntry({
+      employee: addStaff,
+      leaveType: addType,
+      startDate: addStart,
+      endDate: addEnd,
+      days: addDays,
+      status: addStatus,
+    });
+    setAddAdded(true);
+    window.setTimeout(() => setAddAdded(false), 2500);
+    setAddStaff("");
+    setAddStart("");
+    setAddEnd("");
+    setAddDays(0);
+    setAddDaysTouched(false);
+  };
+
+  const balanceFor = (name: string) => {
+    const b = computedBalances.find((x: any) => x.employee === name);
+    const annual = b?.breakdown?.find((x: any) => x.type === "Annual Leave");
+    return annual?.balance ?? 0;
   };
 
   // Export the UJTP master database as an Excel file — same columns as the
@@ -536,11 +702,12 @@ export default function LeavePage() {
                 : null;
         const ent = src?.entitlement;
         const hasEntitlement = ent !== undefined && ent !== null;
+        const live = liveUsedByStaffType.get(`${e.name}|${t.name}`) || 0;
         return {
           type: t.name,
           entitlement: hasEntitlement ? ent : null,
-          used: hasEntitlement ? (src.used ?? 0) : 0,
-          balance: hasEntitlement ? (src.remaining ?? 0) : 0,
+          used: hasEntitlement ? (src.used ?? 0) + live : 0,
+          balance: hasEntitlement ? (src.remaining ?? 0) - live : 0,
           hasEntitlement,
         };
       });
@@ -551,7 +718,7 @@ export default function LeavePage() {
         breakdown,
       };
     });
-  }, [employees, trackerUtil, leaveTypes]);
+  }, [employees, trackerUtil, leaveTypes, liveUsedByStaffType]);
 
   const getTypeColor = (name: string) =>
     leaveTypes.find((t) => t.name === name)?.color || "#64748b";
@@ -597,6 +764,8 @@ export default function LeavePage() {
 
       {/* Executive dashboard merged into the Summary Dashboard tab */}
       <HrhLeaveTracker
+        externalRecords={trackerExternalRecords}
+        onManualAdd={addManualEntry}
         kpiExtra={
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
@@ -1153,6 +1322,129 @@ export default function LeavePage() {
                         </div>
                       ))}
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+            {/* Quick Add Leave (manual HR entry) */}
+            <Card className="no-print">
+              <CardHeader>
+                <CardTitle>Add Leave Manually</CardTitle>
+                <CardDescription>
+                  Register leave for any staff member — remaining balances
+                  update automatically and it syncs to the CMaT app
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-6">
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      Staff member
+                    </label>
+                    <select
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                      value={addStaff}
+                      onChange={(e) => setAddStaff(e.target.value)}
+                    >
+                      <option value="">Select staff…</option>
+                      {employees.map((em: any) => (
+                        <option key={em.name} value={em.name}>
+                          {em.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      Leave type
+                    </label>
+                    <select
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                      value={addType}
+                      onChange={(e) => setAddType(e.target.value)}
+                    >
+                      {leaveTypes.map((t: any) => (
+                        <option key={t.name} value={t.name}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      From
+                    </label>
+                    <input
+                      type="date"
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                      value={addStart}
+                      onChange={(e) => {
+                        setAddStart(e.target.value);
+                        setAddDaysTouched(false);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      To
+                    </label>
+                    <input
+                      type="date"
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                      value={addEnd}
+                      onChange={(e) => {
+                        setAddEnd(e.target.value);
+                        setAddDaysTouched(false);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      Days
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                      value={addDays || ""}
+                      onChange={(e) => {
+                        setAddDaysTouched(true);
+                        setAddDays(parseInt(e.target.value, 10) || 0);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      Status
+                    </label>
+                    <select
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                      value={addStatus}
+                      onChange={(e) => setAddStatus(e.target.value)}
+                    >
+                      <option value="Approved">Approved</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <Button
+                    size="sm"
+                    disabled={!addValid}
+                    onClick={handleAddLeave}
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Add Leave
+                  </Button>
+                  {addAdded && (
+                    <span className="text-sm font-medium text-emerald-600">
+                      ✓ Leave added — balances updated
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {addStaff
+                      ? `${addStaff} · Annual balance: ${balanceFor(addStaff)} days`
+                      : ""}
+                  </span>
                 </div>
               </CardContent>
             </Card>

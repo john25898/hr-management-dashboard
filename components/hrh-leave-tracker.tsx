@@ -370,8 +370,9 @@ const countWorkdays = (start: string, end: string) => {
   return days;
 };
 
-// Leave records = static workbook records + records added in the browser
-function useLeaveRecords() {
+// Leave records = static workbook records + records added in the browser + any
+// records synced live from the CMaT app (passed down by the parent page).
+function useLeaveRecords(external?: any[]) {
   const [local, setLocal] = React.useState<any[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -399,7 +400,20 @@ function useLeaveRecords() {
     });
   }, []);
 
-  const records = React.useMemo(() => [...leaveRecords, ...local], [local]);
+  const records = React.useMemo(() => {
+    const all = [...leaveRecords, ...local, ...(external || [])];
+    const seen = new Map<string, any>();
+    for (const r of all) {
+      // Dedup by id when available; otherwise by a composite key so synced
+      // records don't double-count against the static workbook.
+      const key = r.id
+        ? String(r.id)
+        : `${r.name}|${r.leaveType}|${r.startDate}|${r.endDate}`;
+      seen.set(key, r);
+    }
+    return Array.from(seen.values());
+  }, [local, external]);
+
   return { records, addRecord };
 }
 
@@ -639,6 +653,7 @@ function StaffDetailModal({
   onSaveEdit,
   records,
   onAddLeave,
+  onManualAdd,
   onClose,
 }: {
   name: string;
@@ -650,6 +665,7 @@ function StaffDetailModal({
   ) => void;
   records: any[];
   onAddLeave: (rec: any) => void;
+  onManualAdd?: (rec: any) => void;
   onClose: () => void;
 }) {
   const util = utilization.find((u) => u.name === name);
@@ -660,6 +676,16 @@ function StaffDetailModal({
 
   const handleAddLeave = (rec: any) => {
     onAddLeave({ ...rec, name });
+    // Also surface to the parent page so the Leave Log / Automatic Leave
+    // Balances / KPIs update AND the entry syncs to the shared backend.
+    onManualAdd?.({
+      employee: name,
+      leaveType: rec.leaveType,
+      startDate: rec.startDate,
+      endDate: rec.endDate,
+      days: rec.days,
+      status: rec.status,
+    });
     const t = rec.leaveType.toLowerCase();
     if (t.includes("annual")) {
       const cur = edits[name]?.annual ?? util?.annual?.used ?? 0;
@@ -955,7 +981,7 @@ function StaffDetailModal({
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab 2 — Staff Utilization (mirrors the "Staff Utilization" sheet)
 // ─────────────────────────────────────────────────────────────────────────────
-function UtilizationTab() {
+function UtilizationTab({ onManualAdd }: { onManualAdd?: (rec: any) => void }) {
   const [countyFilter, setCountyFilter] = React.useState("all");
   const [cadreFilter, setCadreFilter] = React.useState("all");
   const [search, setSearch] = React.useState("");
@@ -1221,6 +1247,7 @@ function UtilizationTab() {
           onSaveEdit={saveEdit}
           records={records}
           onAddLeave={addRecord}
+          onManualAdd={onManualAdd}
           onClose={() => setSelected(null)}
         />
       )}
@@ -1231,8 +1258,8 @@ function UtilizationTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab 3 — Leave Records (mirrors the "Leave Records" sheet)
 // ─────────────────────────────────────────────────────────────────────────────
-function RecordsTab() {
-  const { records } = useLeaveRecords();
+function RecordsTab({ externalRecords }: { externalRecords?: any[] }) {
+  const { records } = useLeaveRecords(externalRecords);
   const [countyFilter, setCountyFilter] = React.useState("all");
   const [typeFilter, setTypeFilter] = React.useState("all");
   const [statusFilter, setStatusFilter] = React.useState("all");
@@ -1460,7 +1487,11 @@ const DIRECTORY: any[] = staffMaster.map((s: any) => {
   };
 });
 
-function StaffDirectoryTab() {
+function StaffDirectoryTab({
+  onManualAdd,
+}: {
+  onManualAdd?: (rec: any) => void;
+}) {
   const [countyFilter, setCountyFilter] = React.useState("all");
   const [designationFilter, setDesignationFilter] = React.useState("all");
   const [sexFilter, setSexFilter] = React.useState("all");
@@ -1697,6 +1728,7 @@ function StaffDirectoryTab() {
           onSaveEdit={saveEdit}
           records={records}
           onAddLeave={addRecord}
+          onManualAdd={onManualAdd}
           onClose={() => setSelected(null)}
         />
       )}
@@ -1767,9 +1799,13 @@ function HolidaysTab() {
 export function HrhLeaveTracker({
   summaryExtra,
   kpiExtra,
+  externalRecords,
+  onManualAdd,
 }: {
   summaryExtra?: React.ReactNode;
   kpiExtra?: React.ReactNode;
+  externalRecords?: any[];
+  onManualAdd?: (rec: any) => void;
 }) {
   return (
     <Tabs defaultValue="summary" className="gap-4">
@@ -1797,13 +1833,13 @@ export function HrhLeaveTracker({
         {summaryExtra}
       </TabsContent>
       <TabsContent value="utilization" className="mt-0">
-        <UtilizationTab />
+        <UtilizationTab onManualAdd={onManualAdd} />
       </TabsContent>
       <TabsContent value="records" className="mt-0">
-        <RecordsTab />
+        <RecordsTab externalRecords={externalRecords} />
       </TabsContent>
       <TabsContent value="directory" className="mt-0">
-        <StaffDirectoryTab />
+        <StaffDirectoryTab onManualAdd={onManualAdd} />
       </TabsContent>
       <TabsContent value="holidays" className="mt-0">
         <HolidaysTab />
